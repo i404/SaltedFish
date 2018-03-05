@@ -1,2 +1,2 @@
 # SaltedFish
-test
+dependency: keras, tushare
