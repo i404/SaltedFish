@@ -8,8 +8,10 @@ from sklearn.model_selection import train_test_split
 
 
 def create_model():
+    data_dim = 1
+    timesteps = 20
     model = Sequential()
-    model.add(LSTM(input_dim=1, output_dim=100, return_sequences=True))
+    model.add(LSTM( input_shape=(timesteps, data_dim), output_dim=100, return_sequences=True))
     model.add(Dropout(0.2))
     model.add(Activation("relu"))
     model.add(LSTM(100, return_sequences=False))
