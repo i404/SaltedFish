@@ -2,59 +2,68 @@ from keras.layers.core import Dense, Activation, Dropout
 from keras.layers.recurrent import LSTM
 from keras.models import Sequential
 from keras import optimizers
+from keras.wrappers.scikit_learn import KerasRegressor
 import pandas as pd
 import numpy as np
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import cross_validate
 
 
 def create_model():
     data_dim = 1
     timesteps = 20
     model = Sequential()
-    model.add(LSTM( input_shape=(timesteps, data_dim), output_dim=100, return_sequences=True))
+    model.add(LSTM(input_shape=(timesteps, data_dim), output_dim=100, return_sequences=True))
     model.add(Dropout(0.2))
     model.add(Activation("relu"))
     model.add(LSTM(100, return_sequences=False))
     model.add(Dropout(0.2))
     model.add(Dense(input_dim=100, output_dim=1))
     # model.add(Activation("linear"))
-    model.add(Activation("relu"))
-    rms = optimizers.RMSprop(lr=0.0002, rho=0.9, epsilon=1e-06)
+    model.add(Activation("linear"))
+    rms = optimizers.RMSprop(lr=0.0001, rho=0.9, epsilon=1e-06)
     # model.compile(loss="mean_squared_logarithmic_error", optimizer=rms,
     # model.compile(loss="kullback_leibler_divergence", optimizer=rms,
-    model.compile(loss="mean_squared_logarithmic_error", optimizer=rms,
+    model.compile(loss="mean_squared_error", optimizer=rms,
                   metrics=['mean_squared_error', 'mean_absolute_error'])
     return model
 
 
 def load_data(file_path, fields, seq_len):
     df = pd.read_csv(file_path)[fields]
-    sample = []
+    data_set = []
     seq_len += 1
     for index in range(len(df) - seq_len):
         # sample.append(df[index: index + seq_len])
-        sample.append([[_] for _ in df[index: index + seq_len]])
-
-    train, test = train_test_split(sample, test_size=0.3)
-    train = np.array(train)
-    test = np.array(test)
-    np.random.shuffle(train)
-    np.random.shuffle(test)
-    return (train[:, :-1], train[:, -1]), (test[:, :-1], test[:, -1])
+        data_set.append([[_] for _ in df[index: index + seq_len]])
+    return np.array(data_set)
 
 
 def run(batch_size=50):
-    (x_train, y_train), (x_test, y_test) = load_data("sample.csv", "open", 20)
+    data_set = load_data("sample.csv", "open", 20)
+    x = data_set[:, :-1]
+    y = data_set[:, -1].flatten()
 
-    model = create_model()
+    model = KerasRegressor(build_fn=create_model, epochs=200,
+                           batch_size=batch_size, verbose=1)
+    """
+    While i.i.d. data is a common assumption in machine learning theory, 
+    it rarely holds in practice. If one knows that the samples have 
+    been generated using a time-dependent process, it’s safer 
+    to use a time-series aware cross-validation scheme 
+    
+    Similarly if we know that the generative process has a group structure
+    (samples from collected from different subjects, experiments, measurement devices) 
+    it safer to use group-wise cross-validation.
+    """
+    # TODO: use time-series aware cross-validation scheme
+    results = cross_validate(
+        model, x, y, cv=10,
+        scoring=['neg_mean_squared_error', 'neg_mean_absolute_error'],
+        return_train_score=True, n_jobs=3)
+    # model.evaluate()
 
-    print('Train...')
-    model.fit(x_train, y_train,
-              batch_size=batch_size,
-              epochs=200,
-              validation_data=(x_test, y_test))
-    m = model.evaluate(x_test, y_test, batch_size=batch_size)
-    return m
+
+    return results
 
 
 if __name__ == "__main__":
@@ -77,11 +86,17 @@ if __name__ == "__main__":
         mse ~ N(1.08, 0.22) mae ~ N(0.49, 7.5e-3)
     
     """
-    N = 5
-    metrics = [run() for i in range(N)]
-    for score, mse, mae in metrics:
-        print("==============")
-        print(f"test score: {score}\ntest mse: {mse}\ntest mae: {mae}\n")
-    metrics_array = np.array(metrics)
-    print(f"metrics mean: {np.mean(metrics_array, 0)}")
-    print(f"metrics var: {np.var(metrics_array, 0)}")
+    metrics = run()
+    print("===================")
+    print(metrics)
+    for key, val in metrics.items():
+        print(f"{key}: {val.mean()}({val.std()})")
+    # print(f"mean: {metrics.mean()}\nstd: {metrics.std()}\n")
+    # for score, mse, mae in metrics:
+    # for mse, mae in metrics:
+    #     print("==============")
+    #     # print(f"test score: {score}\ntest mse: {mse}\ntest mae: {mae}\n")
+    #     print(f"test mse: {mse}\ntest mae: {mae}\n")
+    # metrics_array = np.array(metrics)
+    # print(f"metrics mean: {np.mean(metrics_array, 0)}")
+    # print(f"metrics var: {np.var(metrics_array, 0)}")
