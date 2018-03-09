@@ -8,7 +8,31 @@ import numpy as np
 from sklearn.model_selection import cross_validate
 
 
-def create_model():
+def create_baseline_model(time_steps=20):
+    """
+    model with 3 dense layers
+    :return: model
+    """
+    model = Sequential()
+    first_layer = Dense(20, input_shape=(time_steps,),
+                        activation="relu")
+    model.add(first_layer)
+    model.add(Dropout(0.2))
+    second_layer = Dense(50, input_shape=(time_steps,),
+                         activation="relu")
+    model.add(second_layer)
+    model.add(Dropout(0.2))
+    third_layer = Dense(1, input_shape=(time_steps,),
+                        activation="relu")
+    model.add(third_layer)
+    sgd = optimizers.sgd(lr=0.0001, decay=1e-6,
+                         momentum=0.9, nesterov=True)
+    model.compile(loss="mean_squared_error", optimizer=sgd,
+                  metrics=["mean_squared_error", "mean_absolute_error"])
+    return model
+
+
+def create_lstm_model():
     data_dim = 1
     timesteps = 20
     model = Sequential()
@@ -38,11 +62,7 @@ def load_data(file_path, fields, seq_len):
     return np.array(data_set)
 
 
-def run(batch_size=50):
-    data_set = load_data("sample.csv", "open", 20)
-    x = data_set[:, :-1]
-    y = data_set[:, -1].flatten()
-
+def evaluate_model(x, y, create_model, batch_size=50):
     model = KerasRegressor(build_fn=create_model, epochs=200,
                            batch_size=batch_size, verbose=1)
     """
@@ -61,7 +81,6 @@ def run(batch_size=50):
         scoring=['neg_mean_squared_error', 'neg_mean_absolute_error'],
         return_train_score=True, n_jobs=3)
     # model.evaluate()
-
 
     return results
 
@@ -86,17 +105,13 @@ if __name__ == "__main__":
         mse ~ N(1.08, 0.22) mae ~ N(0.49, 7.5e-3)
     
     """
-    metrics = run()
+    data_set = load_data("sample.csv", "open", 20)
+    x = data_set[:, :-1]
+    y = data_set[:, -1].flatten()
+    metrics = evaluate_model(x.reshape(x.shape[0], x.shape[1]),
+                             y, create_model=create_baseline_model)
+    # metrics = evaluate_model(x, y, create_model=create_lstm_model)
     print("===================")
     print(metrics)
     for key, val in metrics.items():
         print(f"{key}: {val.mean()}({val.std()})")
-    # print(f"mean: {metrics.mean()}\nstd: {metrics.std()}\n")
-    # for score, mse, mae in metrics:
-    # for mse, mae in metrics:
-    #     print("==============")
-    #     # print(f"test score: {score}\ntest mse: {mse}\ntest mae: {mae}\n")
-    #     print(f"test mse: {mse}\ntest mae: {mae}\n")
-    # metrics_array = np.array(metrics)
-    # print(f"metrics mean: {np.mean(metrics_array, 0)}")
-    # print(f"metrics var: {np.var(metrics_array, 0)}")
