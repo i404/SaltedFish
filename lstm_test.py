@@ -4,10 +4,12 @@ from keras.models import Sequential
 from keras import optimizers
 from keras.wrappers.scikit_learn import KerasRegressor
 from keras.wrappers.scikit_learn import KerasClassifier
-import pandas as pd
-import numpy as np
 from sklearn.model_selection import cross_validate
 from sklearn.metrics import accuracy_score
+import pandas as pd
+import numpy as np
+
+import os
 
 
 def create_baseline_model(time_steps=20):
@@ -16,17 +18,23 @@ def create_baseline_model(time_steps=20):
     :return: model
     """
     model = Sequential()
-    first_layer = Dense(20, input_shape=(time_steps,),
-                        activation="relu")
-    model.add(first_layer)
+    model.add(Dense(40, input_shape=(time_steps,), activation="relu"))
     model.add(Dropout(0.2))
-    second_layer = Dense(50, input_shape=(time_steps,),
-                         activation="relu")
-    model.add(second_layer)
+
+    # model.add(Dense(100, activation="relu"))
+    # model.add(Dropout(0.2))
+
+    model.add(Dense(100, activation="relu"))
     model.add(Dropout(0.2))
-    third_layer = Dense(1, input_shape=(time_steps,),
-                        activation="sigmoid")
-    model.add(third_layer)
+
+    model.add(Dense(100, activation="relu"))
+    model.add(Dropout(0.2))
+
+    model.add(Dense(100, activation="relu"))
+    model.add(Dropout(0.2))
+
+    model.add(Dense(1, activation="sigmoid"))
+
     sgd = optimizers.sgd(lr=0.0001, decay=1e-6,
                          momentum=0.9, nesterov=True)
     model.compile(loss="binary_crossentropy", optimizer=sgd,
@@ -56,18 +64,30 @@ def create_lstm_model():
     return model
 
 
+def load_all_data(path, fields, seq_len):
+    res = None
+    for file_name in os.listdir(path):
+        tmp_arr = load_data(os.path.join(path, file_name), fields, seq_len)
+        if res is None:
+            res = tmp_arr
+        elif not tmp_arr.size == 0:
+            res = np.vstack((res, tmp_arr))
+    return res
+
+
 def load_data(file_path, fields, seq_len):
     df = pd.read_csv(file_path)[fields]
     data_set = []
     seq_len += 1
     for index in range(len(df) - seq_len):
         # sample.append(df[index: index + seq_len])
-        data_set.append([[_] for _ in df[index: index + seq_len]])
+        # data_set.append([[_] for _ in df[index: index + seq_len]])
+        data_set.append(df[index: index+seq_len].values)
     return np.array(data_set)
 
 
-def evaluate_model(x, y, create_model, batch_size=50):
-    model = KerasClassifier(build_fn=create_model, epochs=200,
+def evaluate_model(x, y, create_model, batch_size=100):
+    model = KerasClassifier(build_fn=create_model, epochs=50,
                             batch_size=batch_size, verbose=1)
     """
     While i.i.d. data is a common assumption in machine learning theory, 
@@ -83,7 +103,7 @@ def evaluate_model(x, y, create_model, batch_size=50):
     results = cross_validate(
         model, x, y, cv=10,
         scoring=['accuracy'],
-        return_train_score=True, n_jobs=1)
+        return_train_score=True, n_jobs=3)
     # model.evaluate()
 
     return results
@@ -115,12 +135,12 @@ if __name__ == "__main__":
         mse ~ N(1.08, 0.22) mae ~ N(0.49, 7.5e-3)
     
     """
-    data_set = load_data("sample.csv", "p_change", 20)
+    data_set = load_all_data("data", "p_change", 20)
     x = data_set[:, :-1]
     y = data_set[:, -1].flatten()
     y = [1 if i > 0 else -1 for i in y]
-    metrics = evaluate_model(x.reshape(x.shape[0], x.shape[1]),
-                             y, create_model=create_baseline_model)
+    # metrics = evaluate_model(x.reshape(x.shape[0], x.shape[1]),
+    metrics = evaluate_model(x, y, create_model=create_baseline_model)
     # metrics = evaluate_model(x, y, create_model=create_lstm_model)
     print("===================")
     print(metrics)
