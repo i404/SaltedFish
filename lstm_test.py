@@ -3,9 +3,11 @@ from keras.layers.recurrent import LSTM
 from keras.models import Sequential
 from keras import optimizers
 from keras.wrappers.scikit_learn import KerasRegressor
+from keras.wrappers.scikit_learn import KerasClassifier
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import cross_validate
+from sklearn.metrics import accuracy_score
 
 
 def create_baseline_model(time_steps=20):
@@ -23,12 +25,12 @@ def create_baseline_model(time_steps=20):
     model.add(second_layer)
     model.add(Dropout(0.2))
     third_layer = Dense(1, input_shape=(time_steps,),
-                        activation="relu")
+                        activation="sigmoid")
     model.add(third_layer)
     sgd = optimizers.sgd(lr=0.0001, decay=1e-6,
                          momentum=0.9, nesterov=True)
-    model.compile(loss="mean_squared_error", optimizer=sgd,
-                  metrics=["mean_squared_error", "mean_absolute_error"])
+    model.compile(loss="binary_crossentropy", optimizer=sgd,
+                  metrics=["accuracy"])
     return model
 
 
@@ -43,12 +45,14 @@ def create_lstm_model():
     model.add(Dropout(0.2))
     model.add(Dense(input_dim=100, output_dim=1))
     # model.add(Activation("linear"))
-    model.add(Activation("linear"))
-    rms = optimizers.RMSprop(lr=0.0001, rho=0.9, epsilon=1e-06)
+    model.add(Activation("sigmoid"))
+    # rms = optimizers.RMSprop(lr=0.0001, rho=0.9, epsilon=1e-06)
+    sgd = optimizers.sgd(lr=0.0001, decay=1e-6,
+                         momentum=0.9, nesterov=True)
     # model.compile(loss="mean_squared_logarithmic_error", optimizer=rms,
     # model.compile(loss="kullback_leibler_divergence", optimizer=rms,
-    model.compile(loss="mean_squared_error", optimizer=rms,
-                  metrics=['mean_squared_error', 'mean_absolute_error'])
+    model.compile(loss="binary_crossentropy", optimizer=sgd,
+                  metrics=['accuracy'])
     return model
 
 
@@ -63,8 +67,8 @@ def load_data(file_path, fields, seq_len):
 
 
 def evaluate_model(x, y, create_model, batch_size=50):
-    model = KerasRegressor(build_fn=create_model, epochs=200,
-                           batch_size=batch_size, verbose=1)
+    model = KerasClassifier(build_fn=create_model, epochs=200,
+                            batch_size=batch_size, verbose=1)
     """
     While i.i.d. data is a common assumption in machine learning theory, 
     it rarely holds in practice. If one knows that the samples have 
@@ -78,11 +82,17 @@ def evaluate_model(x, y, create_model, batch_size=50):
     # TODO: use time-series aware cross-validation scheme
     results = cross_validate(
         model, x, y, cv=10,
-        scoring=['neg_mean_squared_error', 'neg_mean_absolute_error'],
-        return_train_score=True, n_jobs=3)
+        scoring=['accuracy'],
+        return_train_score=True, n_jobs=1)
     # model.evaluate()
 
     return results
+
+
+def baseline(y):
+    y_true = y[1:]
+    y_pred = y[:-1]
+    return accuracy_score(y_pred, y_true)
 
 
 if __name__ == "__main__":
@@ -105,9 +115,10 @@ if __name__ == "__main__":
         mse ~ N(1.08, 0.22) mae ~ N(0.49, 7.5e-3)
     
     """
-    data_set = load_data("sample.csv", "open", 20)
+    data_set = load_data("sample.csv", "p_change", 20)
     x = data_set[:, :-1]
     y = data_set[:, -1].flatten()
+    y = [1 if i > 0 else -1 for i in y]
     metrics = evaluate_model(x.reshape(x.shape[0], x.shape[1]),
                              y, create_model=create_baseline_model)
     # metrics = evaluate_model(x, y, create_model=create_lstm_model)
@@ -115,3 +126,4 @@ if __name__ == "__main__":
     print(metrics)
     for key, val in metrics.items():
         print(f"{key}: {val.mean()}({val.std()})")
+    print(f"baseline: {baseline(y)}")
