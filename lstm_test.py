@@ -5,9 +5,10 @@ from keras import optimizers
 from keras.wrappers.scikit_learn import KerasRegressor
 from keras.wrappers.scikit_learn import KerasClassifier
 from sklearn.model_selection import cross_validate
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, recall_score, precision_score
 import pandas as pd
 import numpy as np
+from customized_loss import binary_crossentropy, bias_loss
 
 import os
 
@@ -37,7 +38,8 @@ def create_baseline_model(time_steps=20):
 
     sgd = optimizers.sgd(lr=0.0001, decay=1e-6,
                          momentum=0.9, nesterov=True)
-    model.compile(loss="binary_crossentropy", optimizer=sgd,
+    # model.compile(loss="binary_crossentropy", optimizer="adam",
+    model.compile(loss=bias_loss, optimizer="adam",
                   metrics=["accuracy"])
     return model
 
@@ -87,7 +89,7 @@ def load_data(file_path, fields, seq_len):
 
 
 def evaluate_model(x, y, create_model, batch_size=100):
-    model = KerasClassifier(build_fn=create_model, epochs=50,
+    model = KerasClassifier(build_fn=create_model, epochs=25,
                             batch_size=batch_size, verbose=1)
     """
     While i.i.d. data is a common assumption in machine learning theory, 
@@ -101,8 +103,8 @@ def evaluate_model(x, y, create_model, batch_size=100):
     """
     # TODO: use time-series aware cross-validation scheme
     results = cross_validate(
-        model, x, y, cv=10,
-        scoring=['accuracy'],
+        model, x, y, cv=5,
+        scoring=['accuracy', 'precision', 'recall'],
         return_train_score=True, n_jobs=3)
     # model.evaluate()
 
@@ -112,33 +114,18 @@ def evaluate_model(x, y, create_model, batch_size=100):
 def baseline(y):
     y_true = y[1:]
     y_pred = y[:-1]
-    return accuracy_score(y_pred, y_true)
+    acc = accuracy_score(y_true, y_pred)
+    recall = recall_score(y_true, y_pred)
+    precision = precision_score(y_true, y_pred)
+    return acc, recall, precision
 
 
 if __name__ == "__main__":
-    """
-    linear activation: mse ~ N(10.09, 2.10)
-    relu activation: mse ~ N(2.30, 0.134)
-                     mse ~ N(1.83, 0.66) mae ~ N(0.61, 0.006)
-    
-    add another relu after 1st lstm: 
-        mse ~ N(2.99, 0.06)  mae ~ N(0.787, 0.002)
-    
-    use sigmoid as output activation
-    and use  mean_squared_logarithmic_error as loss to deal with exp in sigmoid
-        mse ~ N(3.10, 1.30) mae ~ N(0.830, 0.018)
-    maybe not converge modify lr to 0.0005:
-        mse ~ N(1.50, 1.01) mae ~ N(0.57, 0.0030)
-    lr = 0.0002, epochs = 200
-        mse ~ N(1.11, 0.11)  mae ~ N(0.44, 1.2e-04)
-    remove 1st relu:
-        mse ~ N(1.08, 0.22) mae ~ N(0.49, 7.5e-3)
-    
-    """
+
     data_set = load_all_data("data", "p_change", 20)
     x = data_set[:, :-1]
     y = data_set[:, -1].flatten()
-    y = [1 if i > 0 else -1 for i in y]
+    y = [1 if i > 0 else 0 for i in y]
     # metrics = evaluate_model(x.reshape(x.shape[0], x.shape[1]),
     metrics = evaluate_model(x, y, create_model=create_baseline_model)
     # metrics = evaluate_model(x, y, create_model=create_lstm_model)
