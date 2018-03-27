@@ -2,15 +2,12 @@ from keras.layers.core import Dense, Activation, Dropout
 from keras.layers.recurrent import LSTM
 from keras.models import Sequential
 from keras import optimizers
-from keras.wrappers.scikit_learn import KerasRegressor
 from keras.wrappers.scikit_learn import KerasClassifier
 from sklearn.model_selection import cross_validate
 from sklearn.metrics import accuracy_score, recall_score, precision_score
-import pandas as pd
-import numpy as np
-from customized_loss import binary_crossentropy, bias_loss
+from customized_loss import bias_loss
 
-import os
+from stock_data import load_all_seq
 
 
 def create_baseline_model(time_steps=20):
@@ -66,41 +63,9 @@ def create_lstm_model():
     return model
 
 
-def load_all_data(path, fields, seq_len):
-    res = None
-    for file_name in os.listdir(path):
-        tmp_arr = load_data(os.path.join(path, file_name), fields, seq_len)
-        if res is None:
-            res = tmp_arr
-        elif not tmp_arr.size == 0:
-            res = np.vstack((res, tmp_arr))
-    return res
-
-
-def load_data(file_path, fields, seq_len):
-    df = pd.read_csv(file_path)[fields]
-    data_set = []
-    seq_len += 1
-    for index in range(len(df) - seq_len):
-        # sample.append(df[index: index + seq_len])
-        # data_set.append([[_] for _ in df[index: index + seq_len]])
-        data_set.append(df[index: index+seq_len].values)
-    return np.array(data_set)
-
-
 def evaluate_model(x, y, create_model, batch_size=100):
     model = KerasClassifier(build_fn=create_model, epochs=25,
                             batch_size=batch_size, verbose=1)
-    """
-    While i.i.d. data is a common assumption in machine learning theory, 
-    it rarely holds in practice. If one knows that the samples have 
-    been generated using a time-dependent process, it’s safer 
-    to use a time-series aware cross-validation scheme 
-    
-    Similarly if we know that the generative process has a group structure
-    (samples from collected from different subjects, experiments, measurement devices) 
-    it safer to use group-wise cross-validation.
-    """
     # TODO: use time-series aware cross-validation scheme
     results = cross_validate(
         model, x, y, cv=5,
@@ -122,7 +87,7 @@ def baseline(y):
 
 if __name__ == "__main__":
 
-    data_set = load_all_data("data", "p_change", 20)
+    data_set = load_all_seq("data", "p_change", 20)
     x = data_set[:, :-1]
     y = data_set[:, -1].flatten()
     y = [1 if i > 0 else 0 for i in y]
