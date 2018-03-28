@@ -33,9 +33,9 @@ if __name__ == "__main__":
     list_file = os.path.join(config.stock_list_file_name)
     need_fresh = True
     if need_fresh:
-        # if not os.path.exists(config.data_path):
-        #     os.mkdir(config.data_path)
-        # get_stock_list(list_file)
+        if not os.path.exists(config.data_path):
+            os.mkdir(config.data_path)
+        get_stock_list(list_file)
 
         for name, code in stock_name_code_from_file(list_file):
             print(f"downloading {name}_{code}", end="")
