@@ -1,16 +1,12 @@
-from keras.layers.core import Dense, Activation, Dropout
-from keras.layers.recurrent import LSTM
-from keras.models import Sequential
-from keras import optimizers
-from keras.wrappers.scikit_learn import KerasClassifier
-from sklearn.model_selection import cross_validate
-from sklearn.metrics import accuracy_score, recall_score, precision_score
+import keras
+from keras import Sequential, optimizers
+from keras.layers import LSTM, Dropout, Activation, Dense, Conv2D, MaxPooling2D, Flatten
+
+import config
 from customized_loss import bias_loss
 
-from stock_data import load_all_seq
 
-
-def create_baseline_model(time_steps=20):
+def create_dense_model(time_steps=20):
     """
     model with 3 dense layers
     :return: model
@@ -63,39 +59,20 @@ def create_lstm_model():
     return model
 
 
-def evaluate_model(x, y, create_model, batch_size=100):
-    model = KerasClassifier(build_fn=create_model, epochs=25,
-                            batch_size=batch_size, verbose=1)
-    # TODO: use time-series aware cross-validation scheme
-    results = cross_validate(
-        model, x, y, cv=5,
-        scoring=['accuracy', 'precision', 'recall'],
-        return_train_score=True, n_jobs=3)
-    # model.evaluate()
+def create_cnn_model():
+    model = Sequential()
+    model.add(Conv2D(32, kernel_size=(3, 3),
+                     activation='relu',
+                     input_shape=config.input_shape))
+    model.add(Conv2D(64, (3, 3), activation='relu'))
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+    model.add(Dropout(0.25))
+    model.add(Flatten())
+    model.add(Dense(128, activation='relu'))
+    model.add(Dropout(0.5))
+    model.add(Dense(1, activation='softmax'))
 
-    return results
-
-
-def baseline(y):
-    y_true = y[1:]
-    y_pred = y[:-1]
-    acc = accuracy_score(y_true, y_pred)
-    recall = recall_score(y_true, y_pred)
-    precision = precision_score(y_true, y_pred)
-    return acc, recall, precision
-
-
-if __name__ == "__main__":
-
-    data_set = load_all_seq("data", "p_change", 20)
-    x = data_set[:, :-1]
-    y = data_set[:, -1].flatten()
-    y = [1 if i > 0 else 0 for i in y]
-    # metrics = evaluate_model(x.reshape(x.shape[0], x.shape[1]),
-    metrics = evaluate_model(x, y, create_model=create_baseline_model)
-    # metrics = evaluate_model(x, y, create_model=create_lstm_model)
-    print("===================")
-    print(metrics)
-    for key, val in metrics.items():
-        print(f"{key}: {val.mean()}({val.std()})")
-    print(f"baseline: {baseline(y)}")
+    model.compile(loss=keras.losses.binary_crossentropy,
+                  optimizer=keras.optimizers.Adadelta(),
+                  metrics=['accuracy'])
+    return model
