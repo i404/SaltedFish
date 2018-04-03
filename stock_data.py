@@ -2,6 +2,7 @@ import os
 import numpy as np
 import pandas as pd
 import keras.backend as K
+from sklearn.preprocessing import MinMaxScaler
 
 import config
 
@@ -84,12 +85,23 @@ def combine_for_cnn(res: (list, list), a: (list, list)) -> (list, list):
     return r_targets + a_targets, r_features + a_features
 
 
+def preprocess(features):
+
+    n_x = features.shape[0]
+    n_y = features.shape[1]
+    n_z = features.shape[2]
+    tmp = features.reshape(n_x, n_y * n_z)
+    tmp = MinMaxScaler().fit_transform(tmp)
+    return tmp.reshape(n_x, n_y, n_z)
+
+
 def load_all_for_cnn(path):
     targets, features = load_all(path, load_data_for_cnn, combine_for_cnn)
     point_num = len(targets)
-    img_rows = features[0].shape[0]
-    img_cols = features[0].shape[1]
     features = np.array(features)
+    features = preprocess(features)
+    img_rows = features.shape[1]
+    img_cols = features.shape[2]
     if K.image_data_format() == 'channels_first':
         features = features.reshape(point_num, 1, img_rows, img_cols)
         config.input_shape = (1, img_rows, img_cols)

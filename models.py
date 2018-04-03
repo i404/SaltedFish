@@ -1,6 +1,7 @@
 import keras
-from keras import Sequential, optimizers
-from keras.layers import LSTM, Dropout, Activation, Dense, Conv2D, MaxPooling2D, Flatten
+from keras import Sequential, optimizers, Input
+from keras.layers import LSTM, Dropout, Activation, Dense, Conv2D, MaxPooling2D, Flatten, regularizers
+from sklearn.model_selection import train_test_split
 
 import config
 from customized_loss import bias_loss
@@ -11,20 +12,27 @@ def create_dense_model(time_steps=20):
     model with 3 dense layers
     :return: model
     """
+
+    l1_penalty = 10e-6
+
     model = Sequential()
-    model.add(Dense(40, input_shape=(time_steps,), activation="relu"))
+    model.add(Dense(40, input_shape=(time_steps,), activation="relu",
+                    activity_regularizer=regularizers.l1(l1_penalty)))
     model.add(Dropout(0.2))
 
     # model.add(Dense(100, activation="relu"))
     # model.add(Dropout(0.2))
 
-    model.add(Dense(100, activation="relu"))
+    model.add(Dense(100, activation="relu",
+                    activity_regularizer=regularizers.l1(l1_penalty)))
     model.add(Dropout(0.2))
 
-    model.add(Dense(100, activation="relu"))
+    model.add(Dense(100, activation="relu",
+                    activity_regularizer=regularizers.l1(l1_penalty)))
     model.add(Dropout(0.2))
 
-    model.add(Dense(100, activation="relu"))
+    model.add(Dense(100, activation="relu",
+                    activity_regularizer=regularizers.l1(l1_penalty)))
     model.add(Dropout(0.2))
 
     model.add(Dense(1, activation="sigmoid"))
@@ -76,3 +84,63 @@ def create_cnn_model():
                   optimizer=keras.optimizers.Adadelta(),
                   metrics=['accuracy'])
     return model
+
+
+def auto_encoder(features, encoding_dim):
+
+    l1_penalty = 0
+
+    input_dim = features.shape[1]
+
+    train, test = train_test_split(features)
+
+    encoder = Sequential()
+    encoder.add(Dense(200, input_shape=(input_dim,), activation="relu",
+                      activity_regularizer=regularizers.l1(l1_penalty)))
+    encoder.add(Dropout(0.2))
+    encoder.add(Dense(150, activation="relu",
+                      activity_regularizer=regularizers.l1(l1_penalty)))
+    encoder.add(Dropout(0.2))
+    encoder.add(Dense(encoding_dim, activation="relu",
+                      activity_regularizer=regularizers.l1(l1_penalty)))
+
+    autoencoder = Sequential()
+    autoencoder.add(encoder)
+    autoencoder.add(Dense(150, activation="relu",
+                          activity_regularizer=regularizers.l1(l1_penalty)))
+    encoder.add(Dropout(0.2))
+    autoencoder.add(Dense(200, activation="relu",
+                          activity_regularizer=regularizers.l1(l1_penalty)))
+    encoder.add(Dropout(0.2))
+    autoencoder.add(Dense(input_dim, activation="sigmoid",
+                          activity_regularizer=regularizers.l1(l1_penalty)))
+
+    autoencoder.compile(optimizer='adadelta', loss='binary_crossentropy')
+    autoencoder.fit(train, train,
+                    epochs=50,
+                    batch_size=256,
+                    shuffle=True,
+                    validation_data=(test, test))
+
+    encode_res = encoder.predict(features)
+    return encode_res
+
+
+if __name__ == "__main__":
+
+    from stock_data import load_all, load_data_for_cnn, combine_for_cnn
+    import numpy as np
+    from sklearn.preprocessing import MinMaxScaler
+
+    targets, features = load_all("data_test", load_data_for_cnn, combine_for_cnn)
+    features = np.array(features)
+    n_x = features.shape[0]
+    n_y = features.shape[1]
+    n_z = features.shape[2]
+    tmp = features.reshape(n_x, n_y * n_z)
+    tmp = MinMaxScaler().fit_transform(tmp)
+
+    features = np.array(tmp)
+    encode_features = auto_encoder(features, 25)
+    print(encode_features)
+

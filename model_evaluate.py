@@ -14,7 +14,7 @@ def evaluate_model(x, y, create_model, batch_size=100):
     results = cross_validate(
         model, x, y, cv=skf,
         scoring=['accuracy', 'precision', 'recall'],
-        return_train_score=True, n_jobs=1)
+        return_train_score=True, n_jobs=3)
     # model.evaluate()
 
     return results
@@ -48,8 +48,8 @@ def evaluate_cnn_model():
 
 if __name__ == "__main__":
 
-    # metrics = evaluate_dense_model()
-    metrics = evaluate_cnn_model()
+    metrics = evaluate_dense_model()
+    # metrics = evaluate_cnn_model()
     print("===================")
     print(metrics)
     for key, val in metrics.items():
