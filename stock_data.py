@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import keras.backend as K
 from sklearn.preprocessing import MinMaxScaler
+from models import auto_encoder
 
 import config
 
@@ -92,16 +93,28 @@ def preprocess(features):
     n_z = features.shape[2]
     tmp = features.reshape(n_x, n_y * n_z)
     tmp = MinMaxScaler().fit_transform(tmp)
-    return tmp.reshape(n_x, n_y, n_z)
+    # return tmp.reshape(n_x, n_y, n_z)
+
+    latent_dim = 8
+    res = auto_encoder(tmp, latent_dim * latent_dim)
+    return res.reshape(n_x, latent_dim, latent_dim)
 
 
 def load_all_for_cnn(path):
-    targets, features = load_all(path, load_data_for_cnn, combine_for_cnn)
+    # targets, features = load_all(path, load_data_for_cnn, combine_for_cnn)
+    # point_num = len(targets)
+    # features = np.array(features)
+    # features = preprocess(features)
+    # img_rows = features.shape[1]
+    # img_cols = features.shape[2]
+    features = pd.read_csv("feature_encode.csv", header=None).values
+    targets = pd.read_csv("target.csv", header=None).values
+
     point_num = len(targets)
-    features = np.array(features)
-    features = preprocess(features)
-    img_rows = features.shape[1]
-    img_cols = features.shape[2]
+    features = features.reshape(point_num, 8, 8)
+    img_rows = 8
+    img_cols = 8
+
     if K.image_data_format() == 'channels_first':
         features = features.reshape(point_num, 1, img_rows, img_cols)
         config.input_shape = (1, img_rows, img_cols)

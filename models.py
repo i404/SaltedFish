@@ -7,38 +7,69 @@ import config
 from customized_loss import bias_loss
 
 
-def create_dense_model(time_steps=20):
+def create_dense_model(input_dim=20):
     """
     model with 3 dense layers
     :return: model
     """
 
-    l1_penalty = 10e-6
-
     model = Sequential()
-    model.add(Dense(40, input_shape=(time_steps,), activation="relu",
-                    activity_regularizer=regularizers.l1(l1_penalty)))
+    model.add(Dense(40, input_shape=(input_dim,), activation="relu"))
     model.add(Dropout(0.2))
 
-    # model.add(Dense(100, activation="relu"))
-    # model.add(Dropout(0.2))
-
-    model.add(Dense(100, activation="relu",
-                    activity_regularizer=regularizers.l1(l1_penalty)))
+    model.add(Dense(128, activation="relu"))
     model.add(Dropout(0.2))
 
-    model.add(Dense(100, activation="relu",
-                    activity_regularizer=regularizers.l1(l1_penalty)))
+    model.add(Dense(128, activation="relu"))
     model.add(Dropout(0.2))
 
-    model.add(Dense(100, activation="relu",
-                    activity_regularizer=regularizers.l1(l1_penalty)))
+    model.add(Dense(32, activation="relu"))
     model.add(Dropout(0.2))
 
     model.add(Dense(1, activation="sigmoid"))
 
-    sgd = optimizers.sgd(lr=0.0001, decay=1e-6,
-                         momentum=0.9, nesterov=True)
+    # model.compile(loss="binary_crossentropy", optimizer="adam",
+    model.compile(loss=bias_loss, optimizer="adam",
+                  metrics=["accuracy"])
+    return model
+
+
+def create_deep_dense_model(input_dim=64):
+    """
+    model with 3 dense layers
+    :return: model
+    """
+
+    model = Sequential()
+    model.add(Dense(128, input_shape=(input_dim,), activation="relu"))
+    model.add(Dropout(0.2))
+
+    model.add(Dense(128, activation="relu"))
+    model.add(Dropout(0.2))
+
+    model.add(Dense(128, activation="relu"))
+    model.add(Dropout(0.2))
+
+    # model.add(Dense(128, activation="relu"))
+    # model.add(Dropout(0.2))
+    #
+    # model.add(Dense(128, activation="relu"))
+    # model.add(Dropout(0.2))
+
+    model.add(Dense(128, activation="relu"))
+    model.add(Dropout(0.2))
+
+    model.add(Dense(128, activation="relu"))
+    model.add(Dropout(0.2))
+
+    model.add(Dense(128, activation="relu"))
+    model.add(Dropout(0.2))
+
+    model.add(Dense(32, activation="relu"))
+    model.add(Dropout(0.2))
+
+    model.add(Dense(1, activation="sigmoid"))
+
     # model.compile(loss="binary_crossentropy", optimizer="adam",
     model.compile(loss=bias_loss, optimizer="adam",
                   metrics=["accuracy"])
@@ -69,15 +100,19 @@ def create_lstm_model():
 
 def create_cnn_model():
     model = Sequential()
-    model.add(Conv2D(32, kernel_size=(3, 3),
-                     activation='relu',
+    model.add(Conv2D(4, kernel_size=(3, 3),
+                     activation='relu', padding="same",
                      input_shape=config.input_shape))
-    model.add(Conv2D(64, (3, 3), activation='relu'))
-    model.add(MaxPooling2D(pool_size=(2, 2)))
-    model.add(Dropout(0.25))
+    # model.add(MaxPooling2D(pool_size=(2, 2)))
+    model.add(Conv2D(8, (3, 3), activation='relu', padding="same"))
+    model.add(Dropout(0.2))
+    model.add(Conv2D(8, (3, 3), activation='relu', padding="same"))
+    model.add(Dropout(0.2))
+    model.add(Conv2D(8, (3, 3), activation='relu', padding="same"))
+    model.add(Dropout(0.2))
     model.add(Flatten())
-    model.add(Dense(128, activation='relu'))
-    model.add(Dropout(0.5))
+    model.add(Dense(16, activation='relu'))
+    model.add(Dropout(0.2))
     model.add(Dense(1, activation='softmax'))
 
     model.compile(loss=keras.losses.binary_crossentropy,
@@ -108,16 +143,16 @@ def auto_encoder(features, encoding_dim):
     autoencoder.add(encoder)
     autoencoder.add(Dense(150, activation="relu",
                           activity_regularizer=regularizers.l1(l1_penalty)))
-    encoder.add(Dropout(0.2))
+    autoencoder.add(Dropout(0.2))
     autoencoder.add(Dense(200, activation="relu",
                           activity_regularizer=regularizers.l1(l1_penalty)))
-    encoder.add(Dropout(0.2))
+    autoencoder.add(Dropout(0.2))
     autoencoder.add(Dense(input_dim, activation="sigmoid",
                           activity_regularizer=regularizers.l1(l1_penalty)))
 
     autoencoder.compile(optimizer='adadelta', loss='binary_crossentropy')
     autoencoder.fit(train, train,
-                    epochs=50,
+                    epochs=25,
                     batch_size=256,
                     shuffle=True,
                     validation_data=(test, test))
@@ -132,7 +167,7 @@ if __name__ == "__main__":
     import numpy as np
     from sklearn.preprocessing import MinMaxScaler
 
-    targets, features = load_all("data_test", load_data_for_cnn, combine_for_cnn)
+    targets, features = load_all("data", load_data_for_cnn, combine_for_cnn)
     features = np.array(features)
     n_x = features.shape[0]
     n_y = features.shape[1]
@@ -140,7 +175,9 @@ if __name__ == "__main__":
     tmp = features.reshape(n_x, n_y * n_z)
     tmp = MinMaxScaler().fit_transform(tmp)
 
-    features = np.array(tmp)
-    encode_features = auto_encoder(features, 25)
-    print(encode_features)
+    np.savetxt("target.csv", targets)
+
+    # features = np.array(tmp)
+    # encode_features = auto_encoder(features, 64)
+    # np.savetxt("feature_encode.csv", encode_features, delimiter=",")
 
