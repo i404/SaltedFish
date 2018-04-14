@@ -1,6 +1,8 @@
 import tushare as ts
 import os
-import config
+from util import config
+
+
 # -*- coding: utf-8 -*-
 
 
