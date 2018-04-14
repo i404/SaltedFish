@@ -10,7 +10,7 @@ class DenseModel(Model):
     def __init__(self):
         self.input_dim = 20
         self.loss = bias_loss
-        self._epochs = 50
+        self._epochs = 100
 
         super().__init__()
 

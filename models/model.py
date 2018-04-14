@@ -26,7 +26,8 @@ class Model(object):
         return history
 
     def predict(self, x):
-        return self.model.predict(x)
+        prob = self.model.predict(x)
+        return [1 if x > 0.5 else 0 for x in prob]
 
     def evaluate(self, x, y):
         model = KerasClassifier(

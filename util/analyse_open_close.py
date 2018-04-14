@@ -1,7 +1,23 @@
 import pandas as pd
+import os
 
-from stock_data import load_all
 import matplotlib.pyplot as plt
+
+
+def load_all(path, load_fun, combine_fun):
+    res = None
+    for file_name in os.listdir(path):
+        file_name = os.path.join(path, file_name)
+        tmp_arr = load_fun(file_name)
+        if res is None and tmp_arr is None:
+            res = None
+        elif res is None:
+            res = tmp_arr
+        elif tmp_arr is None:
+            res = res
+        else:
+            res = combine_fun(res, tmp_arr)
+    return res
 
 
 def load_open_close_diff(file_name):
