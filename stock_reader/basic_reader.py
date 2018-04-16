@@ -21,6 +21,7 @@ class BasicReader(object):
 
     @staticmethod
     def get_target_from_df(df):
+        # return df["p_change"].values[1]
         arr = df["open"].values
         return (arr[0] - arr[1]) / arr[1]
 

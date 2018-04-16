@@ -4,7 +4,7 @@ from tensorflow.python.ops import array_ops
 import random
 
 
-cost = 1.0
+cost = 1.5
 
 
 def bias_loss(y_true, y_pred):
