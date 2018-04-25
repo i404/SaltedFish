@@ -7,7 +7,7 @@ class Model(object):
     def __init__(self):
 
         self.validation_split = 0.3
-        self.batch_size = 512
+        self.batch_size = 1024
 
         self._metrics = ['accuracy', 'precision', 'recall']
         self._default_epochs = 100
@@ -26,8 +26,11 @@ class Model(object):
         return history
 
     def predict(self, x):
-        prob = self.model.predict(x)
+        prob = self.predict_prob(x)
         return [1 if x > 0.5 else 0 for x in prob]
+
+    def predict_prob(self, x):
+        return self.model.predict(x)
 
     def evaluate(self, x, y):
         model = KerasClassifier(
