@@ -2,7 +2,7 @@ from keras import Sequential
 from keras.layers import Dense, Dropout
 from keras.losses import binary_crossentropy
 
-from util import bias_loss
+from util import bias_binary_crossentropy
 from models import Model
 
 

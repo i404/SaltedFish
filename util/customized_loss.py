@@ -3,12 +3,20 @@ import tensorflow as tf
 from tensorflow.python.ops import array_ops
 import random
 
+cost = 1.75
 
-cost = 1.5
 
-
-def bias_loss(y_true, y_pred):
+def bias_binary_crossentropy(y_true, y_pred):
     raw_loss = K.binary_crossentropy(y_true, y_pred)
+    cond = tf.logical_and(tf.equal(y_true, 0),
+                          tf.greater_equal(y_pred, 0.5))
+    tuned_loss = cost * raw_loss
+    bias_raw_loss = array_ops.where(cond, tuned_loss, raw_loss)
+    return K.mean(bias_raw_loss, axis=-1)
+
+
+def bias_mean_square_error(y_true, y_pred):
+    raw_loss = K.square(y_pred - y_true)
     cond = tf.logical_and(tf.equal(y_true, 0),
                           tf.greater_equal(y_pred, 0.5))
     tuned_loss = cost * raw_loss
@@ -19,6 +27,10 @@ def bias_loss(y_true, y_pred):
 def binary_crossentropy(y_true, y_pred):
     # origin implementation of binary_crossentropy in keras
     return K.mean(K.binary_crossentropy(y_true, y_pred), axis=-1)
+
+
+def mean_squared_error(y_true, y_pred):
+    return K.mean(K.square(y_pred - y_true), axis=-1)
 
 
 if __name__ == "__main__":
@@ -36,9 +48,9 @@ if __name__ == "__main__":
                        feed_dict={x: x_value, y: y_value})
     print(tmp0)
 
-    tmp1 = session.run(binary_crossentropy(x, y),
+    tmp1 = session.run(mean_squared_error(x, y),
                        feed_dict={x: x_value, y: y_value})
     print(tmp1)
-    tmp2 = session.run(bias_loss(x, y),
+    tmp2 = session.run(bias_mean_square_error(x, y),
                        feed_dict={x: x_value, y: y_value})
     print(tmp2)

@@ -1,7 +1,7 @@
 from keras import Sequential
 from keras.layers import Dropout, Dense
 
-from util import bias_loss
+from util import bias_binary_crossentropy
 from models import Model
 
 
@@ -9,7 +9,7 @@ class DeepDenseModel(Model):
 
     def __init__(self):
         self.input_dim = 64
-        self.loss = bias_loss
+        self.loss = bias_binary_crossentropy
         self._epochs = 500
 
         super().__init__()
