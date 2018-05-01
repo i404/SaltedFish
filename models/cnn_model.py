@@ -27,9 +27,9 @@ class CnnModel(Model):
         model.add(Flatten())
         model.add(Dense(16, activation='relu'))
         model.add(Dropout(0.2))
-        model.add(Dense(1, activation='softmax'))
+        model.add(Dense(1, activation='linear'))
 
-        model.compile(loss=keras.losses.binary_crossentropy,
+        model.compile(loss=keras.losses.mean_squared_error,
                       optimizer=keras.optimizers.Adadelta(),
                       metrics=['accuracy'])
         return model

@@ -12,14 +12,15 @@ class MatrixReader(BasicReader):
 
     def get_feature_from_df(self, df):
         raw_feature = df.drop(columns=["date"]).values
-        rows, cols = raw_feature.shape
-        if K.image_data_format() == 'channels_first':
-            feature = raw_feature.reshape(1, rows, cols)
-            config.input_shape = (1, rows, cols)
-        else:
-            feature = raw_feature.reshape(rows, cols, 1)
-            config.input_shape = (rows, cols, 1)
-        return feature
+        return raw_feature
+        # rows, cols = raw_feature.shape
+        # if K.image_data_format() == 'channels_first':
+        #     feature = raw_feature.reshape(1, rows, cols)
+        #     config.input_shape = (1, rows, cols)
+        # else:
+        #     feature = raw_feature.reshape(rows, cols, 1)
+        #     config.input_shape = (rows, cols, 1)
+        # return feature
 
     # def load_file(self, file_name):
     #     df = pd.read_csv(file_name)

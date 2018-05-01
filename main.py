@@ -1,20 +1,7 @@
-from stock_reader import SequenceReader
+from stock_reader import SequenceReader, CnnFormatReader
 from models import DenseModel, Cnn1DModel
 import matplotlib.pyplot as plt
 from sklearn.metrics import accuracy_score, recall_score, precision_score
-from sklearn.preprocessing import MinMaxScaler
-import keras.backend as K
-
-
-def reshape_1d_feature_depend_on_backend(raw_features):
-    rows, cols = raw_features.shape
-    if K.image_data_format() == 'channels_first':
-        feature = raw_features.reshape(rows, 1, cols)
-        shape = (1, cols)
-    else:
-        feature = raw_features.reshape(rows, cols, 1)
-        shape = (cols, 1)
-    return shape, feature
 
 
 def top_n_precision(n, probs, labels):
@@ -30,19 +17,17 @@ def top_n_precision(n, probs, labels):
 
 
 if __name__ == "__main__":
-    # print("Hello World!")
-    sequence_reader = SequenceReader("data")
-    t_targets, t_features, v_targets, v_features = sequence_reader.load_raw_data()
+    sequence_reader = CnnFormatReader(SequenceReader("data"))
+    # t_targets, t_features, v_targets, v_features = sequence_reader.load_raw_data()
+    data_dict = sequence_reader.load_raw_data()
+    t_targets = data_dict.get("train_targets")
+    t_features = data_dict.get("train_features")
+    v_targets = data_dict.get("validation_targets")
+    v_features = data_dict.get("validation_features")
+    stock_ids = data_dict.get("stock_ids")
+    shape = data_dict.get("shape")
 
-    # scale = MinMaxScaler()
-    # t_features = scale.fit_transform(t_features)
-    # v_features = scale.transform(v_features)
-
-    # model = DenseModel()
-
-    tmp_shape, t_features = reshape_1d_feature_depend_on_backend(t_features)
-    _, v_features = reshape_1d_feature_depend_on_backend(v_features)
-    model = Cnn1DModel(tmp_shape)
+    model = Cnn1DModel(shape)
     history = model.fit(t_features, t_targets)
 
     p_target = model.predict(v_features)
