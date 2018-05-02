@@ -1,5 +1,6 @@
 from keras.wrappers.scikit_learn import KerasClassifier
 from sklearn.model_selection import StratifiedShuffleSplit, cross_validate
+from keras.callbacks import EarlyStopping
 
 
 class Model(object):
@@ -7,12 +8,16 @@ class Model(object):
     def __init__(self):
 
         self.validation_split = 0.3
-        self.batch_size = 1024
+        self.batch_size = 2048
 
         self._metrics = ['accuracy', 'precision', 'recall']
         self._default_epochs = 100
         self._default_n_jobs = 1
         self._default_cv_num = 10
+
+        # todo: choose better `monitor` for early stop
+        self.callback = EarlyStopping(monitor='val_loss', min_delta=0,
+                                      patience=60, verbose=1, mode='auto')
 
         self.model = self._create()
 
@@ -22,7 +27,7 @@ class Model(object):
     def fit(self, x, y):
         history = self.model.fit(
             x, y, epochs=self.epochs, batch_size=self.batch_size,
-            verbose=1, validation_split=self.validation_split)
+            verbose=1, validation_split=self.validation_split, callbacks=[self.callback])
         return history
 
     def predict(self, x):
