@@ -8,7 +8,7 @@ class Model(object):
     def __init__(self):
 
         self.validation_split = 0.3
-        self.batch_size = 2048
+        self._default_batch_size = 2048
 
         self._metrics = ['accuracy', 'precision', 'recall']
         self._default_epochs = 100
@@ -16,18 +16,25 @@ class Model(object):
         self._default_cv_num = 10
 
         # todo: choose better `monitor` for early stop
-        self.callback = EarlyStopping(monitor='val_loss', min_delta=0,
-                                      patience=60, verbose=1, mode='auto')
+        # self.callback = [EarlyStopping(monitor='val_acc', min_delta=0,
+        #                                patience=60, verbose=1, mode='auto')]
+        self.callbacks = None
 
-        self.model = self._create()
+        self.input_shape = None
+
+        self.model = None
 
     def _create(self):
         raise NotImplementedError("create")
 
     def fit(self, x, y):
+
+        if self.model is None:
+            self.model = self._create()
+
         history = self.model.fit(
             x, y, epochs=self.epochs, batch_size=self.batch_size,
-            verbose=1, validation_split=self.validation_split, callbacks=[self.callback])
+            verbose=1, validation_split=self.validation_split, callbacks=self.callbacks)
         return history
 
     def predict(self, x):
@@ -49,6 +56,9 @@ class Model(object):
 
         return results
 
+    def set_input_shape(self, input_shape):
+        self.input_shape = input_shape
+
     @property
     def epochs(self):
         if hasattr(self, "_epochs"):
@@ -69,4 +79,11 @@ class Model(object):
             return self._cv_num
         else:
             return self._default_cv_num
+
+    @property
+    def batch_size(self):
+        if hasattr(self, "_batch_size"):
+            return self._batch_size
+        else:
+            return self._default_batch_size
 

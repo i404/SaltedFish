@@ -1,5 +1,5 @@
-from stock_reader import SequenceReader, CnnFormatReader
-from models import DenseModel, Cnn1DModel
+from stock_reader import SequenceReader, CnnFormatReader, MatrixReader
+from models import DenseModel, Cnn1DModel, Cnn2DModel
 import matplotlib.pyplot as plt
 from sklearn.metrics import accuracy_score, recall_score, precision_score
 
@@ -16,10 +16,9 @@ def top_n_precision(n, probs, labels):
     return 1.0 * correct_cnt / len(res_lst)
 
 
-if __name__ == "__main__":
-    sequence_reader = CnnFormatReader(SequenceReader("data"))
-    # t_targets, t_features, v_targets, v_features = sequence_reader.load_raw_data()
-    data_dict = sequence_reader.load_raw_data()
+def evaluate_model(reader, model):
+
+    data_dict = reader.load_raw_data()
     t_targets = data_dict.get("train_targets")
     t_features = data_dict.get("train_features")
     v_targets = data_dict.get("validation_targets")
@@ -27,7 +26,7 @@ if __name__ == "__main__":
     stock_ids = data_dict.get("stock_ids")
     shape = data_dict.get("shape")
 
-    model = Cnn1DModel(shape)
+    model.set_input_shape(shape)
     history = model.fit(t_features, t_targets)
 
     p_target = model.predict(v_features)
@@ -36,8 +35,8 @@ if __name__ == "__main__":
                         ("precision", precision_score)]:
         print(f"{name}: {m_fun(v_targets, p_target)}")
 
-    plt.plot(history.history["loss"])
-    plt.plot(history.history["val_loss"])
+    plt.plot(history.history["loss"][1:])
+    plt.plot(history.history["val_loss"][1:])
     plt.show()
 
     p_prob = model.predict_prob(v_features)
@@ -45,4 +44,11 @@ if __name__ == "__main__":
         res = top_n_precision(n, probs=p_prob.flatten().tolist(), labels=v_targets.flatten().tolist())
         print(f"top {n} precision is {res}")
 
+
+if __name__ == "__main__":
+    # sequence_reader = CnnFormatReader(SequenceReader("data"))
+    # model = Cnn1DModel()
+    model = Cnn2DModel()
+    sequence_reader = CnnFormatReader(MatrixReader("data"))
+    evaluate_model(sequence_reader, model)
 

@@ -8,14 +8,18 @@ from util import bias_mean_square_error
 
 class Cnn1DModel(Model):
 
-    def __init__(self, input_shape):
+    def __init__(self):
         self._epochs = 500
         # self.loss = keras.losses.mean_squared_error
-        self.loss = bias_mean_square_error
-        self.input_shape = input_shape
+        self.loss = keras.losses.mean_absolute_error
+        # self.loss = bias_mean_square_error
         super().__init__()
 
     def _create(self):
+
+        if self.input_shape is None:
+            raise ValueError("input_shape is not set")
+
         model = Sequential()
 
         model.add(Convolution1D(filters=16, kernel_size=3, padding="same",
