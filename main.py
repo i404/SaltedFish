@@ -51,13 +51,21 @@ def evaluate_model(reader, model):
 
 
 if __name__ == "__main__":
-    # sequence_reader = CnnFormatReader(SequenceReader("data"), cnn_dim=1)
-    field_lst = ["p_change", "volume", "turnover"]
-    sequence_reader = CnnFormatReader(
-        MatrixReader("data", cols=field_lst),
-        cnn_dim=1)
-    model = Cnn1DModel(batch_size=32, epochs=300)
-    # model = Cnn2DModel()
-    # sequence_reader = CnnFormatReader(MatrixReader("data"), cnn_dim=2)
-    evaluate_model(sequence_reader, model)
+
+    models_lst = [
+        (CnnFormatReader(SequenceReader("data"), cnn_dim=1),
+         Cnn1DModel(batch_size=2048, epochs=300,
+                    early_stop_epochs=40)),
+
+        (CnnFormatReader(MatrixReader("data", cols=["p_change", "volume", "turnover"]),
+                         cnn_dim=1),
+         Cnn1DModel(batch_size=2048, epochs=300,
+                    early_stop_epochs=40)),
+
+        (CnnFormatReader(MatrixReader("data"), cnn_dim=2),
+         Cnn2DModel(batch_size=32, epochs=15, early_stop_epochs=4))
+    ]
+
+    feature_reader, model = models_lst[0]
+    evaluate_model(feature_reader, model)
 

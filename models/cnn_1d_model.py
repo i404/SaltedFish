@@ -8,11 +8,13 @@ from util import bias_mean_square_error
 
 class Cnn1DModel(Model):
 
-    def __init__(self, epochs=500, batch_size=32):
+    def __init__(self, epochs=500, batch_size=32,
+                 early_stop_epochs=None):
         # self.loss = keras.losses.mean_squared_error
         self.loss = keras.losses.mean_absolute_error
         # self.loss = bias_mean_square_error
-        super().__init__(epochs=epochs, batch_size=batch_size)
+        super().__init__(epochs=epochs, batch_size=batch_size,
+                         early_stop_epochs=early_stop_epochs)
 
     def _create(self):
 

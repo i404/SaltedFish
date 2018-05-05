@@ -8,10 +8,12 @@ from models import Model
 
 class Cnn2DModel(Model):
 
-    def __init__(self, epochs=20, batch_size=16):
+    def __init__(self, epochs=20, batch_size=16,
+                 early_stop_epochs=None):
         # self._epochs = 20
         # self._batch_size = 16
-        super().__init__(epochs=epochs, batch_size=batch_size)
+        super().__init__(epochs=epochs, batch_size=batch_size,
+                         early_stop_epochs=early_stop_epochs)
 
     def _create(self):
 

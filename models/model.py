@@ -6,7 +6,8 @@ from keras.callbacks import EarlyStopping
 class Model(object):
 
     def __init__(self, input_shape=None, validation_split=0.3,
-                 batch_size=2048, epochs=100, normalize=False):
+                 batch_size=2048, epochs=100, normalize=False,
+                 early_stop_epochs=None):
 
         self.validation_split = validation_split
         self.batch_size = batch_size
@@ -15,6 +16,7 @@ class Model(object):
         self.normalize = normalize
         self.n_jobs = 1
         self.cv_num = 10
+        self.early_stop_epochs = early_stop_epochs
         # self._default_batch_size = 2048
         # self.input_shape = None
         # self._default_epochs = 100
@@ -24,9 +26,13 @@ class Model(object):
         self._metrics = ['accuracy', 'precision', 'recall']
 
         # todo: choose better `monitor` for early stop
-        # self.callback = [EarlyStopping(monitor='val_acc', min_delta=0,
-        #                                patience=60, verbose=1, mode='auto')]
-        self.callbacks = None
+        if self.early_stop_epochs is not None:
+            self.callbacks = [
+                EarlyStopping(monitor='val_acc', min_delta=0,
+                              patience=self.early_stop_epochs,
+                              verbose=1, mode='auto')]
+        else:
+            self.callbacks = None
 
         self.model = None
 
@@ -64,4 +70,3 @@ class Model(object):
 
     def set_input_shape(self, input_shape):
         self.input_shape = input_shape
-
