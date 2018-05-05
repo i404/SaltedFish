@@ -7,11 +7,15 @@ from util import config
 
 class MatrixReader(BasicReader):
 
-    def __init__(self, path):
+    def __init__(self, path, cols=None):
+        self.cols = cols
         super().__init__(path)
 
     def get_feature_from_df(self, df):
-        raw_feature = df.drop(columns=["date"]).values
+        if self.cols is None:
+            raw_feature = df.drop(columns=["date"]).values
+        else:
+            raw_feature = df[self.cols].values
         return raw_feature
         # rows, cols = raw_feature.shape
         # if K.image_data_format() == 'channels_first':

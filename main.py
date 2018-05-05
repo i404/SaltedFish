@@ -4,16 +4,21 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import accuracy_score, recall_score, precision_score
 
 
-def top_n_precision(n, probs, labels):
+def top_n_precision(y_pred, y_true, ids):
 
-    res_lst = list(zip(probs, labels))
-    res_lst = sorted(res_lst, key=lambda x: x[0], reverse=True)
-    res_lst = res_lst[:n]
-    # print(res_lst)
-    if res_lst[-1][0] < 0.5:
-        raise Exception(f"{n}th prob < 0.5")
-    correct_cnt = sum([x[1] for x in res_lst])
-    return 1.0 * correct_cnt / len(res_lst)
+    pred_label_id_lst = list(zip(y_pred, y_true, ids))
+    sorted_lst = sorted(pred_label_id_lst, key=lambda x: x[0], reverse=True)
+
+    for pred, label, s_id in sorted_lst[:10]:
+        print(f"pred_prob: {pred}, label: {label}, stock_id: {s_id}")
+
+    for n in [1, 3, 5, 10, 15, 20]:
+        res_lst = sorted_lst[:n]
+        if res_lst[-1][0] < 0.5:
+            raise Exception(f"{n}th prob < 0.5")
+        correct_cnt = sum([x[1] for x in res_lst])
+        res = 1.0 * correct_cnt / len(res_lst)
+        print(f"top {n} precision is {res}")
 
 
 def evaluate_model(reader, model):
@@ -40,15 +45,19 @@ def evaluate_model(reader, model):
     plt.show()
 
     p_prob = model.predict_prob(v_features)
-    for n in [1, 3, 5, 10, 15, 20]:
-        res = top_n_precision(n, probs=p_prob.flatten().tolist(), labels=v_targets.flatten().tolist())
-        print(f"top {n} precision is {res}")
+    p_pred_lst = p_prob.flatten().tolist()
+    v_targets_lst = v_targets.flatten().tolist()
+    top_n_precision(p_pred_lst, v_targets_lst, stock_ids)
 
 
 if __name__ == "__main__":
-    # sequence_reader = CnnFormatReader(SequenceReader("data"))
-    # model = Cnn1DModel()
-    model = Cnn2DModel()
-    sequence_reader = CnnFormatReader(MatrixReader("data"))
+    # sequence_reader = CnnFormatReader(SequenceReader("data"), cnn_dim=1)
+    field_lst = ["p_change", "volume", "turnover"]
+    sequence_reader = CnnFormatReader(
+        MatrixReader("data", cols=field_lst),
+        cnn_dim=1)
+    model = Cnn1DModel(batch_size=32, epochs=300)
+    # model = Cnn2DModel()
+    # sequence_reader = CnnFormatReader(MatrixReader("data"), cnn_dim=2)
     evaluate_model(sequence_reader, model)
 
