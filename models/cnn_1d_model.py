@@ -3,7 +3,7 @@ from keras import Sequential
 from keras.layers import Dense, Convolution1D, Dropout, Flatten, MaxPooling1D
 
 from models import Model
-from util import bias_mean_square_error
+from util import bias_mean_square_error, bias_mean_abs_error
 
 
 class Cnn1DModel(Model):
@@ -11,8 +11,9 @@ class Cnn1DModel(Model):
     def __init__(self, epochs=500, batch_size=32,
                  early_stop_epochs=None):
         # self.loss = keras.losses.mean_squared_error
-        self.loss = keras.losses.mean_absolute_error
+        # self.loss = keras.losses.mean_absolute_error
         # self.loss = bias_mean_square_error
+        self.loss = bias_mean_abs_error
         super().__init__(epochs=epochs, batch_size=batch_size,
                          early_stop_epochs=early_stop_epochs)
 

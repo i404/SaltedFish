@@ -24,6 +24,15 @@ def bias_mean_square_error(y_true, y_pred):
     return K.mean(bias_raw_loss, axis=-1)
 
 
+def bias_mean_abs_error(y_true, y_pred):
+    raw_loss = K.abs(y_pred - y_true)
+    cond = tf.logical_and(tf.equal(y_true, 0),
+                          tf.greater_equal(y_pred, 0.5))
+    tuned_loss = cost * raw_loss
+    bias_raw_loss = array_ops.where(cond, tuned_loss, raw_loss)
+    return K.mean(bias_raw_loss, axis=-1)
+
+
 def binary_crossentropy(y_true, y_pred):
     # origin implementation of binary_crossentropy in keras
     return K.mean(K.binary_crossentropy(y_true, y_pred), axis=-1)
