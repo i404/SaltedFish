@@ -2,11 +2,11 @@ import keras
 from keras import Sequential
 from keras.layers import Dense, Convolution1D, Dropout, Flatten, MaxPooling1D
 
-from models import Model
+from models import BaseModel
 from util import bias_mean_square_error, bias_mean_abs_error
 
 
-class Cnn1DModel(Model):
+class Cnn1DModel(BaseModel):
 
     def __init__(self, epochs=500, batch_size=32,
                  early_stop_epochs=None):
@@ -24,9 +24,19 @@ class Cnn1DModel(Model):
 
         model = Sequential()
 
-        model.add(Convolution1D(filters=16, kernel_size=3, padding="same",
+        model.add(Convolution1D(filters=64, kernel_size=3, padding="same",
                                 activation="relu",
                                 input_shape=self.input_shape))
+        model.add(Dropout(0.5))
+
+        model.add(Convolution1D(filters=64, kernel_size=3, padding="same",
+                                activation="relu"))
+        # model.add(MaxPooling1D())
+        model.add(Dropout(0.5))
+
+        model.add(Convolution1D(filters=64, kernel_size=3, padding="same",
+                                activation="relu"))
+        # model.add(MaxPooling1D())
         model.add(Dropout(0.5))
 
         model.add(Convolution1D(filters=32, kernel_size=3, padding="same",
@@ -34,7 +44,7 @@ class Cnn1DModel(Model):
         # model.add(MaxPooling1D())
         model.add(Dropout(0.5))
 
-        model.add(Convolution1D(filters=64, kernel_size=3, padding="same",
+        model.add(Convolution1D(filters=32, kernel_size=3, padding="same",
                                 activation="relu"))
         model.add(Dropout(0.5))
 

@@ -2,10 +2,10 @@ from keras import Sequential
 from keras.layers import Dropout, Dense
 
 from util import bias_binary_crossentropy
-from models import Model
+from models import BaseModel
 
 
-class DeepDenseModel(Model):
+class DeepDenseModel(BaseModel):
 
     def __init__(self, input_shape=(64,), epochs=500):
         # self.input_dim = 64

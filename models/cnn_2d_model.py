@@ -3,10 +3,10 @@ from keras import Sequential
 from keras.layers import Conv2D, Dropout, Flatten, Dense, MaxPooling2D
 
 from util import config
-from models import Model
+from models import BaseModel
 
 
-class Cnn2DModel(Model):
+class Cnn2DModel(BaseModel):
 
     def __init__(self, epochs=20, batch_size=16,
                  early_stop_epochs=None):

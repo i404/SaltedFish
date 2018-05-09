@@ -3,10 +3,10 @@ from keras.layers import Dense, Dropout
 from keras.losses import binary_crossentropy
 
 from util import bias_binary_crossentropy
-from models import Model
+from models import BaseModel
 
 
-class DenseModel(Model):
+class DenseModel(BaseModel):
 
     def __init__(self, input_shape=(20,), epochs=200):
         # self.input_dim = 20

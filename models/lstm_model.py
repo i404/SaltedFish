@@ -1,10 +1,10 @@
 from keras import Sequential, optimizers
 from keras.layers import LSTM, Dropout, Activation, Dense
 
-from models import Model
+from models import BaseModel
 
 
-class LstmModel(Model):
+class LstmModel(BaseModel):
 
     def __init__(self):
         self.timesteps = 20

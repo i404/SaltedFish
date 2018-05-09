@@ -2,7 +2,7 @@ from keras import Sequential
 from keras.layers import Dense, regularizers, Dropout
 from sklearn.model_selection import train_test_split
 
-from models import Model
+from models import BaseModel
 
 
 class AutoEncoder(object):

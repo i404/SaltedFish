@@ -57,15 +57,16 @@ if __name__ == "__main__":
          Cnn1DModel(batch_size=2048, epochs=300,
                     early_stop_epochs=40)),
 
-        (CnnFormatReader(MatrixReader("data", cols=["p_change", "volume", "turnover"]),
+        # ["p_change", "volume", "turnover"]
+        (CnnFormatReader(MatrixReader("data", cols=["p_change", "turnover", "open", "high", "close", "low"]),
                          cnn_dim=1),
          Cnn1DModel(batch_size=2048, epochs=300,
-                    early_stop_epochs=40)),
+                    early_stop_epochs=80)),
 
         (CnnFormatReader(MatrixReader("data"), cnn_dim=2),
          Cnn2DModel(batch_size=32, epochs=15, early_stop_epochs=4))
     ]
 
-    feature_reader, model = models_lst[0]
+    feature_reader, model = models_lst[1]
     evaluate_model(feature_reader, model)
 
