@@ -7,7 +7,7 @@ class Model(object):
 
     def __init__(self, input_shape=None, validation_split=0.3,
                  batch_size=2048, epochs=100, normalize=False,
-                 early_stop_epochs=None):
+                 early_stop_epochs=None, verbose=1):
 
         self.validation_split = validation_split
         self.batch_size = batch_size
@@ -17,6 +17,7 @@ class Model(object):
         self.n_jobs = 1
         self.cv_num = 10
         self.early_stop_epochs = early_stop_epochs
+        self.verbose = verbose
         # self._default_batch_size = 2048
         # self.input_shape = None
         # self._default_epochs = 100
@@ -46,7 +47,7 @@ class Model(object):
 
         history = self.model.fit(
             x, y, epochs=self.epochs, batch_size=self.batch_size,
-            verbose=1, validation_split=self.validation_split, callbacks=self.callbacks)
+            verbose=self.verbose, validation_split=self.validation_split, callbacks=self.callbacks)
         return history
 
     def predict(self, x):
