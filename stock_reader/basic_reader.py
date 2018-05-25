@@ -31,11 +31,12 @@ class BasicReader(Reader):
 
     @staticmethod
     def format_target(target):
+        # return [1 if x > 0.001 else 0 for x in target]
         return [1 if x > 0 else 0 for x in target]
 
     def load_raw_data(self):
 
-        stock_ids= []
+        stock_ids = []
 
         train_targets = []
         train_features = []

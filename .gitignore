@@ -107,3 +107,5 @@ ENV/
 # data
 data/
 *.csv
+
+model_res_*

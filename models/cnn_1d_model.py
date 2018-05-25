@@ -29,7 +29,7 @@ class Cnn1DModel(Model):
                                 input_shape=self.input_shape))
         model.add(Dropout(0.5))
 
-        model.add(Convolution1D(filters=64, kernel_size=3, padding="same",
+        model.add(Convolution1D(filters=32, kernel_size=3, padding="same",
                                 activation="relu"))
         # model.add(MaxPooling1D())
         model.add(Dropout(0.5))

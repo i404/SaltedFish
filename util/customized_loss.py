@@ -3,7 +3,7 @@ import tensorflow as tf
 from tensorflow.python.ops import array_ops
 import random
 
-cost = 1.75
+cost = 1.0
 
 
 def bias_binary_crossentropy(y_true, y_pred):

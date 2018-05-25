@@ -3,6 +3,7 @@ from models import DenseModel, Cnn1DModel, Cnn2DModel
 import matplotlib.pyplot as plt
 from sklearn.metrics import accuracy_score, recall_score, precision_score
 import numpy as np
+import time
 
 
 def top_n_precision(y_pred, y_true, ids):
@@ -81,6 +82,12 @@ def evaluate_composite_models(reader_models):
         # plt.show()
 
         tmp_p_prob = model.predict_prob(v_features)
+        # with open(f"model_res_{int(time.time())}", "w") as fp:
+        #     for s_id, y, p in zip(stock_ids,
+        #                           v_targets.tolist(),
+        #                           tmp_p_prob.flatten().tolist()):
+        #         fp.write(f"{s_id},{p},{y}\n")
+
         total_probs.append(tmp_p_prob.flatten())
 
     # p_preds = sum(np.array(total_probs)) / len(total_probs)
@@ -132,7 +139,9 @@ if __name__ == "__main__":
          Cnn2DModel(batch_size=32, epochs=15, early_stop_epochs=4, verbose=verbose))
     ]
 
-    # feature_reader, model = models_lst[1]
-    # evaluate_model(feature_reader, model)
-    evaluate_composite_models(models_lst[:2])
+    for feature_reader, model in [models_lst[0], models_lst[1]]:
+        # feature_reader, model = models_lst[1]
+        evaluate_model(feature_reader, model)
+
+    # evaluate_composite_models([models_lst[0], models_lst[1]])
 
