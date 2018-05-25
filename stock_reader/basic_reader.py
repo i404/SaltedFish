@@ -35,7 +35,7 @@ class BasicReader(Reader):
 
     def load_raw_data(self):
 
-        stock_ids= []
+        stock_ids = []
 
         train_targets = []
         train_features = []

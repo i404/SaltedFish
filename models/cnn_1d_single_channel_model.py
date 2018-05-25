@@ -6,7 +6,7 @@ from models import Model
 from util import bias_mean_square_error, bias_mean_abs_error
 
 
-class Cnn1DModel(Model):
+class Cnn1DSingleChannelModel(Model):
 
     def __init__(self, epochs=500, batch_size=32,
                  early_stop_epochs=None, verbose=1):
@@ -29,7 +29,7 @@ class Cnn1DModel(Model):
                                 input_shape=self.input_shape))
         model.add(Dropout(0.5))
 
-        model.add(Convolution1D(filters=64, kernel_size=3, padding="same",
+        model.add(Convolution1D(filters=32, kernel_size=3, padding="same",
                                 activation="relu"))
         # model.add(MaxPooling1D())
         model.add(Dropout(0.5))
