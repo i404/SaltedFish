@@ -14,11 +14,32 @@ def load_preprocessed_data(feature_file, target_file):
 
 class BasicReader(Reader):
 
-    def __init__(self, path, feature_range=20,
-                 data_min_length=50):
+    df_min_length = None
+
+    def get_df_length(self, sample_num=100):
+
+        stock_files = os.listdir(self.path)
+        file_sample = np.random.choice(stock_files, sample_num, False)
+        len_cnt = {}
+        for file_name in file_sample:
+            file_path = os.path.join(self.path, file_name)
+            df = pd.read_csv(file_path)
+            file_length = len(df)
+            len_cnt[file_length] = len_cnt.get(file_length, 0) + 1
+
+        max_cnt = max(len_cnt.items(), key=lambda x: x[1])[1]
+        max_len = max(len_cnt.items(), key=lambda x: x[0])[0]
+        if len_cnt[max_len] == max_cnt:
+            print(f"min length of df should be {max_len}")
+            return max_len
+
+        raise Exception(f"file max length is {max_len}, but most file don't have this length")
+
+    def __init__(self, path, feature_range=20):
         self.path = path
         self.feature_range = feature_range
-        self.df_min_length = data_min_length
+        if BasicReader.df_min_length is None:
+            BasicReader.df_min_length = self.get_df_length()
 
     def get_feature_from_df(self, df):
         raise NotImplementedError("get_feature_from_df")

@@ -24,7 +24,7 @@ class Cnn1DMultiChannelModel(Model):
 
         model = Sequential()
 
-        model.add(Convolution1D(filters=64, kernel_size=3, padding="same",
+        model.add(Convolution1D(filters=128, kernel_size=3, padding="same",
                                 activation="relu",
                                 input_shape=self.input_shape))
         model.add(Dropout(0.5))
@@ -33,10 +33,13 @@ class Cnn1DMultiChannelModel(Model):
                                 activation="relu",
                                 input_shape=self.input_shape))
         model.add(Dropout(0.5))
+
+        # model.add(Convolution1D(filters=32, kernel_size=3, padding="same",
+        #                         activation="relu"))
+        # model.add(Dropout(0.5))
 
         model.add(Convolution1D(filters=32, kernel_size=3, padding="same",
                                 activation="relu"))
-        # model.add(MaxPooling1D())
         model.add(Dropout(0.5))
 
         model.add(Convolution1D(filters=32, kernel_size=3, padding="same",
@@ -46,6 +49,10 @@ class Cnn1DMultiChannelModel(Model):
         model.add(Convolution1D(filters=16, kernel_size=3, padding="same",
                                 activation="relu"))
         # model.add(MaxPooling1D())
+        model.add(Dropout(0.5))
+
+        model.add(Convolution1D(filters=16, kernel_size=3, padding="same",
+                                activation="relu"))
         model.add(Dropout(0.5))
 
         model.add(Convolution1D(filters=16, kernel_size=3, padding="same",

@@ -48,6 +48,11 @@ def evaluate_model(reader, model):
     p_prob = model.predict_prob(v_features)
     p_pred_lst = p_prob.flatten().tolist()
     v_targets_lst = v_targets.flatten().tolist()
+
+    p_positive = sum([1 if x > 0.5 else 0 for x in p_pred_lst])
+    v_positive = sum([1 if x > 0.5 else 0 for x in v_targets_lst])
+    print(f"num of positive prob: {p_positive}, num of positive y: {v_positive}")
+
     top_n_precision(p_pred_lst, v_targets_lst, stock_ids)
 
 
@@ -74,4 +79,3 @@ if __name__ == "__main__":
         evaluate_model(reader, model)
 
     plt.show()
-
