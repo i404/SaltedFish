@@ -7,9 +7,9 @@ from util import config
 
 class MatrixReader(BasicReader):
 
-    def __init__(self, path, cols=None):
+    def __init__(self, path, index_file, cols=None):
         self.cols = cols
-        super().__init__(path)
+        super().__init__(path, index_file)
 
     def get_feature_from_df(self, df):
         if self.cols is None:
