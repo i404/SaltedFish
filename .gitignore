@@ -108,3 +108,4 @@ ENV/
 data/
 *.csv
 model_res_*
+*.png

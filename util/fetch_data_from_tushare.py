@@ -1,9 +1,12 @@
 import tushare as ts
 import os
 from util import config
-
-
+import pandas as pd
 # -*- coding: utf-8 -*-
+
+start_time = "2017-12-01"
+index_url = f"http://quotes.money.163.com/service/chddata.html?" + \
+            f"code=0000001&start={start_time.replace('-', '')}"
 
 
 def get_stock_list(list_file_name):
@@ -22,7 +25,7 @@ def stock_name_code_from_file(list_file_name):
 
 def get_stock_data_and_save(name, code):
     file_name = os.path.join(config.data_path, f"{code}.csv")
-    df = ts.get_hist_data(code, start=config.start_time)
+    df = ts.get_hist_data(code, start=start_time)
     if df is not None:
         df.to_csv(file_name)
         print("\n")
@@ -30,9 +33,15 @@ def get_stock_data_and_save(name, code):
         print("\tNone")
 
 
+def get_total_index():
+    df = pd.read_csv(index_url, encoding="gbk")
+    result_path = os.path.join("..", "total_index.csv")
+    df.to_csv(result_path, sep=",", encoding="utf-8", index=False)
+
+
 if __name__ == "__main__":
-    # list_file = os.path.join(config.data_path, config.stock_list_file_name)
-    list_file = os.path.join(config.stock_list_file_name)
+    list_file = os.path.join("..", "stock_list.csv")
+    get_total_index()
     need_fresh = True
     if need_fresh:
         if not os.path.exists(config.data_path):

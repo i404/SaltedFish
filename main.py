@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import accuracy_score, recall_score, precision_score
 import numpy as np
 import time
+import os
 
 
 def timer(fun):
@@ -22,6 +23,13 @@ def timer(fun):
         return res
 
     return tmp
+
+
+def save_figure(file_name, path="fig"):
+    if not os.path.exists(path):
+        os.mkdir(path)
+    file_name = f"{file_name}_{int(time.time())}"
+    plt.savefig(os.path.join(path, file_name))
 
 
 def top_n_precision(y_pred, y_true, ids):
@@ -43,7 +51,7 @@ def top_n_precision(y_pred, y_true, ids):
 
 
 @timer
-def evaluate_model(reader, model):
+def evaluate_model(trail_name, reader, model):
 
     data_dict = reader.load_raw_data()
     t_targets = data_dict.get("train_targets")
@@ -73,6 +81,7 @@ def evaluate_model(reader, model):
     print(history.history["loss"][-10:])
     print(history.history["val_loss"][-10:])
     # plt.show()
+    save_figure(trail_name, "fig")
 
     p_prob = model.predict_prob(v_features)
     p_pred_lst = p_prob.flatten().tolist()
@@ -87,29 +96,27 @@ def evaluate_model(reader, model):
 
 if __name__ == "__main__":
 
-    # data_path = "data_20180531"
     data_path = "data"
-    verbose = 2
+    index_file = "total_index.csv"
+    verbose = 0
 
     models_lst = [
-        (CnnFormatReader(SequenceReader(data_path), cnn_dim=1),
-         Cnn1DSingleChannelModel(batch_size=512, epochs=400,
+        ("single_channel_cnn",
+         CnnFormatReader(SequenceReader(data_path, index_file), cnn_dim=1),
+         Cnn1DSingleChannelModel(batch_size=2048, epochs=300,
                                  early_stop_epochs=40, verbose=verbose)),
 
-        (CnnFormatReader(MatrixReader(data_path, cols=["p_change", "turnover"]),
+        ("multi_channel_cnn",
+         CnnFormatReader(MatrixReader(data_path, index_file, cols=["p_change", "turnover"]),
                          cnn_dim=1),
          Cnn1DMultiChannelModel(batch_size=2048, epochs=300,
                                 early_stop_epochs=40, verbose=verbose)),
 
-        (CnnFormatReader(MatrixReader(data_path), cnn_dim=2),
+        ("multi_channel_cnn",
+         CnnFormatReader(MatrixReader(data_path, index_file), cnn_dim=2),
          Cnn2DModel(batch_size=32, epochs=15, early_stop_epochs=4, verbose=verbose))
     ]
 
     # for reader, model in [models_lst[0], models_lst[1]]:
-    for reader, model in [models_lst[0]]:
-        # start_time = time.time()
-        evaluate_model(reader, model)
-        # end_time = time.time()
-        # print(f"train time: {end_time - start_time}")
-
-    plt.show()
+    for name, reader, model in [models_lst[0]]:
+        evaluate_model(name, reader, model)
