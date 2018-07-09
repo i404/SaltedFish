@@ -14,8 +14,10 @@ def load_preprocessed_data(feature_file, target_file):
 
 class BasicReader(Reader):
 
+    # df_min_length = 340
     df_min_length = None
 
+    # todo: need a better way to find min_length
     def get_df_length(self, sample_num=100):
 
         stock_files = os.listdir(self.path)
@@ -27,13 +29,14 @@ class BasicReader(Reader):
             file_length = len(df)
             len_cnt[file_length] = len_cnt.get(file_length, 0) + 1
 
+        print(len_cnt)
         max_cnt = max(len_cnt.items(), key=lambda x: x[1])[1]
         max_len = max(len_cnt.items(), key=lambda x: x[0])[0]
         if len_cnt[max_len] == max_cnt:
             print(f"min length of df should be {max_len}")
             return max_len
 
-        raise Exception(f"file max length is {max_len}, but most file don't have this length")
+        raise Exception(f"file max length is {max_len}, but most file don't have this length\n{len_cnt}")
 
     def __init__(self, path, feature_range=20):
         self.path = path

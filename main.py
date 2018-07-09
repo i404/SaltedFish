@@ -3,6 +3,25 @@ from models import DenseModel, Cnn1DSingleChannelModel, Cnn2DModel, Cnn1DMultiCh
 import matplotlib.pyplot as plt
 from sklearn.metrics import accuracy_score, recall_score, precision_score
 import numpy as np
+import time
+
+
+def timer(fun):
+
+    def tmp(reader, model):
+        beg_time = time.time()
+        print(f"start at {beg_time}")
+        res = fun(reader, model)
+        end_time = time.time()
+        print(f"end at {end_time}")
+        cost_time = end_time - beg_time
+        hour = int(cost_time / 60.0 / 60.0)
+        minute = int((cost_time - 60 * 60 * hour) / 60.0)
+        second = cost_time - 60 * 60 * hour - 60 * minute
+        print(f"run time: {hour}h {minute}m {second}s (total {cost_time}s)")
+        return res
+
+    return tmp
 
 
 def top_n_precision(y_pred, y_true, ids):
@@ -16,12 +35,14 @@ def top_n_precision(y_pred, y_true, ids):
     for n in [1, 3, 5, 10, 15, 20]:
         res_lst = sorted_lst[:n]
         if res_lst[-1][0] < 0.5:
-            raise Exception(f"{n}th prob < 0.5")
+            print(f"{n}th prob < 0.5")
+            # raise Exception(f"{n}th prob < 0.5")
         correct_cnt = sum([x[1] for x in res_lst])
         res = 1.0 * correct_cnt / len(res_lst)
         print(f"top {n} precision is {res}")
 
 
+@timer
 def evaluate_model(reader, model):
 
     data_dict = reader.load_raw_data()
@@ -31,6 +52,7 @@ def evaluate_model(reader, model):
     v_features = data_dict.get("validation_features")
     stock_ids = data_dict.get("stock_ids")
     shape = data_dict.get("shape")
+    print(f"data length: {len(t_targets)}")
 
     model.set_input_shape(shape)
     history = model.fit(t_features, t_targets)
@@ -43,6 +65,13 @@ def evaluate_model(reader, model):
 
     plt.plot(history.history["loss"][1:])
     plt.plot(history.history["val_loss"][1:])
+    # plt.plot(history.history["acc"])
+    # plt.plot(history.history["val_acc"])
+
+    print(history.history["acc"][-10:])
+    print(history.history["val_acc"][-10:])
+    print(history.history["loss"][-10:])
+    print(history.history["val_loss"][-10:])
     # plt.show()
 
     p_prob = model.predict_prob(v_features)
@@ -51,19 +80,20 @@ def evaluate_model(reader, model):
 
     p_positive = sum([1 if x > 0.5 else 0 for x in p_pred_lst])
     v_positive = sum([1 if x > 0.5 else 0 for x in v_targets_lst])
-    print(f"num of positive prob: {p_positive}, num of positive y: {v_positive}")
+    print(f"#positive_prob: {p_positive}, #positive_y: {v_positive}, #total_stocks: {len(v_targets_lst)}")
 
     top_n_precision(p_pred_lst, v_targets_lst, stock_ids)
 
 
 if __name__ == "__main__":
 
+    # data_path = "data_20180531"
     data_path = "data"
-    verbose = 0
+    verbose = 2
 
     models_lst = [
         (CnnFormatReader(SequenceReader(data_path), cnn_dim=1),
-         Cnn1DSingleChannelModel(batch_size=2048, epochs=300,
+         Cnn1DSingleChannelModel(batch_size=512, epochs=400,
                                  early_stop_epochs=40, verbose=verbose)),
 
         (CnnFormatReader(MatrixReader(data_path, cols=["p_change", "turnover"]),
@@ -75,7 +105,11 @@ if __name__ == "__main__":
          Cnn2DModel(batch_size=32, epochs=15, early_stop_epochs=4, verbose=verbose))
     ]
 
-    for reader, model in [models_lst[0], models_lst[1]]:
+    # for reader, model in [models_lst[0], models_lst[1]]:
+    for reader, model in [models_lst[0]]:
+        # start_time = time.time()
         evaluate_model(reader, model)
+        # end_time = time.time()
+        # print(f"train time: {end_time - start_time}")
 
     plt.show()

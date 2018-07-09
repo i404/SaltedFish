@@ -1,12 +1,18 @@
 from keras import backend as K
 import tensorflow as tf
+from keras.metrics import top_k_categorical_accuracy
 from tensorflow.python.ops import array_ops
 import random
+import functools
 
-cost = 1.75
+cost = 2
+fp_cost = 1
+fn_cost = 0.5
 
 
+# todo: current bias cost is not continuous and derivative
 def bias_binary_crossentropy(y_true, y_pred):
+    # raise Exception("not implement")
     raw_loss = K.binary_crossentropy(y_true, y_pred)
     cond = tf.logical_and(tf.equal(y_true, 0),
                           tf.greater_equal(y_pred, 0.5))
@@ -40,6 +46,40 @@ def binary_crossentropy(y_true, y_pred):
 
 def mean_squared_error(y_true, y_pred):
     return K.mean(K.square(y_pred - y_true), axis=-1)
+
+
+def precision(y_true, y_pred):
+    """Precision metric.
+
+    Only computes a batch-wise average of precision.
+
+    Computes the precision, a metric for multi-label classification of
+    how many selected items are relevant.
+    """
+    true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
+    predicted_positives = K.sum(K.round(K.clip(y_pred, 0, 1)))
+    precision = true_positives / (predicted_positives + K.epsilon())
+    return precision
+
+
+def as_keras_metric(method):
+    @functools.wraps(method)
+    def wrapper(self, args, **kwargs):
+        """ Wrapper for turning tensorflow metrics into keras metrics """
+        value, update_op = method(self, args, **kwargs)
+        K.get_session().run(tf.local_variables_initializer())
+        with tf.control_dependencies([update_op]):
+            value = tf.identity(value)
+        return value
+    return wrapper
+
+
+def tf_precision(y_true, y_pred):
+    return as_keras_metric(tf.metrics.precision)(y_true, y_pred)
+
+
+def tf_recall(y_true, y_pred):
+    return as_keras_metric(tf.metrics.recall)(y_true, y_pred)
 
 
 if __name__ == "__main__":
