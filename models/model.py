@@ -1,13 +1,14 @@
 from keras.wrappers.scikit_learn import KerasClassifier
 from sklearn.model_selection import StratifiedShuffleSplit, cross_validate
-from keras.callbacks import EarlyStopping
+
+from models.early_stop_with_low_bound import EarlyStoppingWithLowBound
 
 
 class Model(object):
 
     def __init__(self, input_shape=None, validation_split=0.3,
                  batch_size=2048, epochs=100, normalize=False,
-                 early_stop_epochs=None, verbose=1):
+                 early_stop_epochs=None, min_iter_num=100, verbose=1):
 
         self.validation_split = validation_split
         self.batch_size = batch_size
@@ -29,9 +30,10 @@ class Model(object):
         # todo: choose better `monitor` for early stop
         if self.early_stop_epochs is not None:
             self.callbacks = [
-                EarlyStopping(monitor='val_acc', min_delta=0,
-                              patience=self.early_stop_epochs,
-                              verbose=1, mode='auto')]
+                EarlyStoppingWithLowBound(
+                    monitor='val_acc', min_delta=0,
+                    patience=self.early_stop_epochs,
+                    verbose=1, mode='auto', min_iter_num=min_iter_num)]
         else:
             self.callbacks = None
 
