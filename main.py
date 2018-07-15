@@ -25,7 +25,8 @@ def top_n_precision(y_pred, y_true, ids):
     for n in [1, 3, 5, 10, 15, 20]:
         res_lst = sorted_lst[:n]
         if res_lst[-1][0] < 0.5:
-            raise Exception(f"{n}th prob < 0.5")
+            # raise Exception(f"{n}th prob < 0.5")
+            print(f"{n}th prob < 0.5")
         correct_cnt = sum([x[1] for x in res_lst])
         res = 1.0 * correct_cnt / len(res_lst)
         print(f"top {n} precision is {res}")
