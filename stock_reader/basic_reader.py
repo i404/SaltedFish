@@ -27,7 +27,7 @@ class BasicReader(Reader):
         self.unit_df_length = self.sequence_length + 2
 
         self.index_data = pd.read_csv(index_file)[['日期', '涨跌幅']]
-        self.index_data.columns = ["date", "p_change"]
+        self.index_data.columns = ["date", "index_change"]
         self.start_date = self.index_data.iloc[0]['date']
         self.index_length = self.index_data.shape[0]
 
@@ -35,6 +35,8 @@ class BasicReader(Reader):
         raise NotImplementedError("get_feature_from_df")
 
     def continuous_df(self, df: pd.DataFrame):
+
+        df = df.join(self.index_data.set_index("date"), on="date")
 
         if df.shape[0] == self.index_length:
             # this stock is full attendance
@@ -67,6 +69,19 @@ class BasicReader(Reader):
     def format_target(target):
         return [1 if x > 0 else 0 for x in target]
 
+    @staticmethod
+    def read_csv_from_file(file_name):
+        df = pd.read_csv(file_name)
+        open_value = df['open'].values
+        close_value = df['close'].values
+        high_value = df['high'].values
+        low_value = df['low'].values
+        change_percent = lambda x: ((x - open_value) / open_value) * 100.0
+        df['change_percent'] = change_percent(close_value)
+        df['high_percent'] = change_percent(high_value)
+        df['low_percent'] = change_percent(low_value)
+        return df.iloc[::-1]
+
     def load_raw_data(self):
 
         stock_ids = []
@@ -89,7 +104,8 @@ class BasicReader(Reader):
 
         for stock_id in os.listdir(self.path):
             file_name = os.path.join(self.path, stock_id)
-            df = pd.read_csv(file_name)
+            # df = pd.read_csv(file_name)
+            df = self.read_csv_from_file(file_name)
             if not len(df) < self.unit_df_length:
                 stock_ids.append(stock_id)
                 for sub_df in self.continuous_df(df):
@@ -107,9 +123,17 @@ class BasicReader(Reader):
                 "validation_targets": np.array(validation_targets),
                 "validation_features": np.array(validation_features)}
 
-# if __name__ == "__main__":
-#
-#     reader = BasicReader("data_test", "../total_index.csv")
-#     df = pd.read_csv("../data_test/_000001.csv")
-#     for sub_df in reader.continuous_df(df):
-#         print(sub_df['date'].values)
+
+if __name__ == "__main__":
+
+    def test1():
+        reader = BasicReader("data_test", "../total_index.csv")
+        df = pd.read_csv("../data_test/_000001.csv")
+        print(next(reader.continuous_df(df)))
+        for sub_df in reader.continuous_df(df):
+            print(sub_df['date'].values)
+
+    def test2():
+        print(BasicReader.read_csv_from_file("../data_test/000001.csv"))
+
+    # test2()

@@ -25,7 +25,7 @@ def stock_name_code_from_file(list_file_name):
 
 def get_stock_data_and_save(name, code):
     file_name = os.path.join(config.data_path, f"{code}.csv")
-    df = ts.get_hist_data(code, start=start_time)
+    df = ts.get_k_data(code, start=start_time)
     if df is not None:
         df.to_csv(file_name)
         print("\n")
@@ -35,17 +35,20 @@ def get_stock_data_and_save(name, code):
 
 def get_total_index():
     df = pd.read_csv(index_url, encoding="gbk")
-    result_path = os.path.join("..", "total_index.csv")
+    result_path = os.path.join("total_index.csv")
     df.to_csv(result_path, sep=",", encoding="utf-8", index=False)
 
 
 if __name__ == "__main__":
-    list_file = os.path.join("..", "stock_list.csv")
+
+    data_path = os.path.join("data")
+
+    list_file = os.path.join("stock_list.csv")
     get_total_index()
     need_fresh = True
     if need_fresh:
-        if not os.path.exists(config.data_path):
-            os.mkdir(config.data_path)
+        if not os.path.exists(data_path):
+            os.mkdir(data_path)
         get_stock_list(list_file)
 
         for name, code in stock_name_code_from_file(list_file):

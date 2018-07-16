@@ -9,4 +9,4 @@ class SequenceReader(BasicReader):
         super().__init__(path, index_file, sequence_length)
 
     def get_feature_from_df(self, df):
-        return df["p_change"].values
+        return df["change_percent"].values
