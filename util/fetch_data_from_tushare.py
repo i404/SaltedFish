@@ -4,7 +4,7 @@ from util import config
 import pandas as pd
 # -*- coding: utf-8 -*-
 
-start_time = "2017-12-01"
+start_time = "2017-01-01"
 index_url = f"http://quotes.money.163.com/service/chddata.html?" + \
             f"code=0000001&start={start_time.replace('-', '')}"
 

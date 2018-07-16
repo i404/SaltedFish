@@ -27,21 +27,21 @@ class Cnn1DSingleChannelModel(Model):
 
         model = Sequential()
 
-        model.add(Convolution1D(filters=128, kernel_size=3, padding="same",
+        model.add(Convolution1D(filters=64, kernel_size=3, padding="same",
                                 activation="relu",
                                 input_shape=self.input_shape))
-        model.add(Convolution1D(filters=128, kernel_size=3, padding="same",
-                                activation="relu"))
-        model.add(MaxPooling1D())
-        model.add(Dropout(0.5))
-
-        model.add(Convolution1D(filters=64, kernel_size=3, padding="same",
-                                activation="relu"))
-
         model.add(Convolution1D(filters=64, kernel_size=3, padding="same",
                                 activation="relu"))
         model.add(MaxPooling1D())
         model.add(Dropout(0.5))
+
+        # model.add(Convolution1D(filters=64, kernel_size=3, padding="same",
+        #                         activation="relu"))
+        #
+        # model.add(Convolution1D(filters=64, kernel_size=3, padding="same",
+        #                         activation="relu"))
+        # model.add(MaxPooling1D())
+        # model.add(Dropout(0.5))
 
         model.add(Convolution1D(filters=32, kernel_size=3, padding="same",
                                 activation="relu"))
@@ -58,10 +58,10 @@ class Cnn1DSingleChannelModel(Model):
                                 activation="relu"))
         model.add(Dropout(0.5))
 
-        model.add(Convolution1D(filters=16, kernel_size=3, padding="same",
+        model.add(Convolution1D(filters=8, kernel_size=3, padding="same",
                                 activation="relu"))
 
-        model.add(Convolution1D(filters=16, kernel_size=3, padding="same",
+        model.add(Convolution1D(filters=8, kernel_size=3, padding="same",
                                 activation="relu"))
         model.add(Dropout(0.5))
         # model.add(MaxPooling1D())

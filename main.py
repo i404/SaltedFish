@@ -9,10 +9,10 @@ import os
 
 def timer(fun):
 
-    def tmp(reader, model):
+    def tmp(name, reader, model):
         beg_time = time.time()
         print(f"start at {beg_time}")
-        res = fun(reader, model)
+        res = fun(name, reader, model)
         end_time = time.time()
         print(f"end at {end_time}")
         cost_time = end_time - beg_time
@@ -102,9 +102,9 @@ if __name__ == "__main__":
 
     models_lst = [
         ("single_channel_cnn",
-         CnnFormatReader(SequenceReader(data_path, index_file), cnn_dim=1),
-         Cnn1DSingleChannelModel(batch_size=2048, epochs=300,
-                                 early_stop_epochs=40, verbose=verbose)),
+         CnnFormatReader(SequenceReader(data_path, index_file, 64), cnn_dim=1),
+         Cnn1DSingleChannelModel(batch_size=32, epochs=600,
+                                 early_stop_epochs=60, verbose=verbose)),
 
         ("multi_channel_cnn",
          CnnFormatReader(MatrixReader(data_path, index_file, cols=["p_change", "turnover"]),

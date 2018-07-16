@@ -29,12 +29,12 @@ class Model(object):
         # todo: choose better `monitor` for early stop
         if self.early_stop_epochs is not None:
             self.callbacks = [
-                # EarlyStopping(monitor='val_acc', min_delta=0,
-                #               patience=self.early_stop_epochs,
-                #               verbose=1, mode='auto')
-                EarlyStopping(monitor='val_tf_precision', min_delta=0,
+                EarlyStopping(monitor='val_loss', min_delta=0,
                               patience=self.early_stop_epochs,
-                              verbose=1, mode='max')
+                              verbose=1, mode='auto')
+                # EarlyStopping(monitor='val_tf_precision', min_delta=0,
+                #               patience=self.early_stop_epochs,
+                #               verbose=1, mode='max')
             ]
         else:
             self.callbacks = None
