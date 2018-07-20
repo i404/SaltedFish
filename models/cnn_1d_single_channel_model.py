@@ -2,6 +2,7 @@ import keras
 from keras import Sequential
 from keras.layers import Dense, Convolution1D, Dropout, Flatten, MaxPooling1D
 from keras.metrics import top_k_categorical_accuracy
+from keras.optimizers import SGD
 
 from models import Model
 from util import bias_mean_square_error, bias_mean_abs_error, bias_binary_crossentropy, tf_precision
@@ -76,7 +77,11 @@ class Cnn1DSingleChannelModel(Model):
         model.add(Dense(1, activation='linear'))
         # model.add(Dense(1, activation='sigmoid'))
 
+        # opt = SGD(lr=0.05, momentum=0.0, decay=0.0, nesterov=False)
+
         model.compile(loss=self.loss,
                       optimizer="adam",
+                      # optimizer="sgd",
+                      # optimizer=opt,
                       metrics=['accuracy', tf_precision])
         return model

@@ -105,7 +105,11 @@ class BasicReader(Reader):
         for stock_id in os.listdir(self.path):
             file_name = os.path.join(self.path, stock_id)
             # df = pd.read_csv(file_name)
-            df = self.read_csv_from_file(file_name)
+            try:
+                df = self.read_csv_from_file(file_name)
+            except KeyError:
+                print(f"read {file_name} fail")
+                continue
             if not len(df) < self.unit_df_length:
                 stock_ids.append(stock_id)
                 for sub_df in self.continuous_df(df):
@@ -132,6 +136,7 @@ if __name__ == "__main__":
         print(next(reader.continuous_df(df)))
         for sub_df in reader.continuous_df(df):
             print(sub_df['date'].values)
+
 
     def test2():
         print(BasicReader.read_csv_from_file("../data_test/000001.csv"))

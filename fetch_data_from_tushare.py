@@ -24,7 +24,7 @@ def stock_name_code_from_file(list_file_name):
 
 
 def get_stock_data_and_save(name, code):
-    file_name = os.path.join(config.data_path, f"{code}.csv")
+    file_name = os.path.join("data", f"{code}.csv")
     df = ts.get_k_data(code, start=start_time)
     if df is not None:
         df.to_csv(file_name)

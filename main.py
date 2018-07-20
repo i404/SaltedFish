@@ -102,9 +102,9 @@ if __name__ == "__main__":
 
     models_lst = [
         ("single_channel_cnn",
-         CnnFormatReader(SequenceReader(data_path, index_file, 64), cnn_dim=1),
-         Cnn1DSingleChannelModel(batch_size=32, epochs=600,
-                                 early_stop_epochs=60, verbose=verbose)),
+         CnnFormatReader(SequenceReader(data_path, index_file, 16), cnn_dim=1),
+         Cnn1DSingleChannelModel(batch_size=4096, epochs=600,
+                                 early_stop_epochs=20, verbose=verbose)),
 
         ("multi_channel_cnn",
          CnnFormatReader(MatrixReader(data_path, index_file, cols=["p_change", "turnover"]),
