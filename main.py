@@ -89,16 +89,28 @@ def evaluate_model(trail_name, reader, model):
 
     p_positive = sum([1 if x > 0.5 else 0 for x in p_pred_lst])
     v_positive = sum([1 if x > 0.5 else 0 for x in v_targets_lst])
-    print(f"#positive_prob: {p_positive}, #positive_y: {v_positive}, #total_stocks: {len(v_targets_lst)}")
+    print(f"#positive_prob: {p_positive}\n"
+          f"#positive_y: {v_positive}\n"
+          f"#total_stocks: {len(v_targets_lst)}\n"
+          f"#positive fraction: {1.0 * v_positive / len(v_targets_lst)}")
 
     top_n_precision(p_pred_lst, v_targets_lst, stock_ids)
 
 
 if __name__ == "__main__":
 
-    data_path = "data"
+    import argparse
+    parser = argparse.ArgumentParser(description='process stock data')
+    parser.add_argument("-v", "--verbose", help="verbose of keras",
+                        type=int, default=0)
+    parser.add_argument("-i", "--input_data", help="path of stock data",
+                        type=str, default="data_test")
+
+    args = parser.parse_args()
+
     index_file = "total_index.csv"
-    verbose = 0
+    data_path = args.input_data
+    verbose = args.verbose
 
     models_lst = [
         ("single_channel_cnn",
@@ -107,16 +119,16 @@ if __name__ == "__main__":
                                  early_stop_epochs=20, verbose=verbose)),
 
         ("multi_channel_cnn",
-         CnnFormatReader(MatrixReader(data_path, index_file, cols=["p_change", "turnover"]),
+         CnnFormatReader(MatrixReader(data_path, index_file, 16),
                          cnn_dim=1),
-         Cnn1DMultiChannelModel(batch_size=2048, epochs=300,
-                                early_stop_epochs=40, verbose=verbose)),
+         Cnn1DMultiChannelModel(batch_size=2048, epochs=600,
+                                early_stop_epochs=20, verbose=verbose)),
 
-        ("multi_channel_cnn",
-         CnnFormatReader(MatrixReader(data_path, index_file), cnn_dim=2),
-         Cnn2DModel(batch_size=32, epochs=15, early_stop_epochs=4, verbose=verbose))
+        # ("multi_channel_cnn",
+        #  CnnFormatReader(MatrixReader(data_path, index_file), cnn_dim=2),
+        #  Cnn2DModel(batch_size=32, epochs=15, early_stop_epochs=4, verbose=verbose))
     ]
 
     # for reader, model in [models_lst[0], models_lst[1]]:
-    for name, reader, model in [models_lst[0]]:
+    for name, reader, model in models_lst:
         evaluate_model(name, reader, model)
