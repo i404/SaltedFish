@@ -76,7 +76,7 @@ class BasicReader(Reader):
         close_value = df['close'].values
         high_value = df['high'].values
         low_value = df['low'].values
-        change_percent = lambda x: ((x - open_value) / open_value) * 100.0
+        change_percent = lambda x: ((x - open_value) / open_value) * 10.0
         df['change_percent'] = change_percent(close_value)
         df['high_percent'] = change_percent(high_value)
         df['low_percent'] = change_percent(low_value)

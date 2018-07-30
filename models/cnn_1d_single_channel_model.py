@@ -33,7 +33,7 @@ class Cnn1DSingleChannelModel(Model):
                                 input_shape=self.input_shape))
         model.add(Convolution1D(filters=64, kernel_size=3, padding="same",
                                 activation="relu"))
-        model.add(MaxPooling1D())
+        # model.add(MaxPooling1D())
         model.add(Dropout(0.5))
 
         # model.add(Convolution1D(filters=64, kernel_size=3, padding="same",
@@ -49,7 +49,7 @@ class Cnn1DSingleChannelModel(Model):
 
         model.add(Convolution1D(filters=32, kernel_size=3, padding="same",
                                 activation="relu"))
-        model.add(MaxPooling1D())
+        # model.add(MaxPooling1D())
         model.add(Dropout(0.5))
 
         model.add(Convolution1D(filters=16, kernel_size=3, padding="same",

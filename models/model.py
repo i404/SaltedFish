@@ -31,7 +31,7 @@ class Model(object):
         if self.early_stop_epochs is not None:
             self.callbacks = [
                 EarlyStoppingWithLowBound(
-                    monitor='val_acc', min_delta=0,
+                    monitor='val_loss', min_delta=0,
                     patience=self.early_stop_epochs,
                     verbose=1, mode='auto', min_iter_num=min_iter_num)]
         else:
