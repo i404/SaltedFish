@@ -30,6 +30,7 @@ def save_figure(file_name, path="fig"):
         os.mkdir(path)
     file_name = f"{file_name}_{int(time.time())}"
     plt.savefig(os.path.join(path, file_name))
+    plt.clf()
 
 
 def top_n_precision(y_pred, y_true, ids):
@@ -76,10 +77,10 @@ def evaluate_model(trail_name, reader, model):
     # plt.plot(history.history["acc"])
     # plt.plot(history.history["val_acc"])
 
-    print(history.history["acc"][-10:])
-    print(history.history["val_acc"][-10:])
-    print(history.history["loss"][-10:])
-    print(history.history["val_loss"][-10:])
+    # print(history.history["acc"][-10:])
+    # print(history.history["val_acc"][-10:])
+    # print(history.history["loss"][-10:])
+    # print(history.history["val_loss"][-10:])
     # plt.show()
     save_figure(trail_name, "fig")
 
@@ -113,16 +114,37 @@ if __name__ == "__main__":
     verbose = args.verbose
 
     models_lst = [
-        ("single_channel_cnn",
-         CnnFormatReader(SequenceReader(data_path, index_file, 32), cnn_dim=1),
-         Cnn1DSingleChannelModel(batch_size=4096, epochs=600,
-                                 early_stop_epochs=20, verbose=verbose)),
 
-        ("multi_channel_cnn",
+        ("multi_channel_cnn_32",
          CnnFormatReader(MatrixReader(data_path, index_file, 32),
                          cnn_dim=1),
          Cnn1DMultiChannelModel(batch_size=4096, epochs=600,
                                 early_stop_epochs=20, verbose=verbose)),
+
+        ("single_channel_cnn_32",
+         CnnFormatReader(SequenceReader(data_path, index_file, 32), cnn_dim=1),
+         Cnn1DSingleChannelModel(batch_size=4096, epochs=600,
+                                 early_stop_epochs=20, verbose=verbose)),
+
+
+
+        # ("multi_channel_cnn_2",
+        #  CnnFormatReader(MatrixReader(data_path, index_file, 32),
+        #                  cnn_dim=1),
+        #  Cnn1DMultiChannelModel(batch_size=4096, epochs=600,
+        #                         early_stop_epochs=20, verbose=verbose)),
+        #
+        # ("multi_channel_cnn_3",
+        #  CnnFormatReader(MatrixReader(data_path, index_file, 32),
+        #                  cnn_dim=1),
+        #  Cnn1DMultiChannelModel(batch_size=4096, epochs=600,
+        #                         early_stop_epochs=20, verbose=verbose)),
+        #
+        # ("multi_channel_cnn_4",
+        #  CnnFormatReader(MatrixReader(data_path, index_file, 32),
+        #                  cnn_dim=1),
+        #  Cnn1DMultiChannelModel(batch_size=4096, epochs=600,
+        #                         early_stop_epochs=20, verbose=verbose)),
 
         # ("multi_channel_cnn",
         #  CnnFormatReader(MatrixReader(data_path, index_file), cnn_dim=2),

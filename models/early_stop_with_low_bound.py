@@ -9,7 +9,7 @@ class EarlyStoppingWithLowBound(Callback):
     def __init__(self, monitor='val_loss',
                  min_delta=0, patience=0,
                  verbose=0, mode='auto',
-                 min_iter_num = 0):
+                 min_iter_num=0):
         super(EarlyStoppingWithLowBound, self).__init__()
 
         self.monitor = monitor

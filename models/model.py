@@ -8,7 +8,7 @@ class Model(object):
 
     def __init__(self, input_shape=None, validation_split=0.3,
                  batch_size=2048, epochs=100, normalize=False,
-                 early_stop_epochs=None, min_iter_num=100, verbose=1):
+                 early_stop_epochs=None, min_iter_num=50, verbose=1):
 
         self.validation_split = validation_split
         self.batch_size = batch_size

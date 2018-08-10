@@ -28,10 +28,10 @@ class Cnn1DSingleChannelModel(Model):
 
         model = Sequential()
 
-        model.add(Convolution1D(filters=64, kernel_size=3, padding="same",
+        model.add(Convolution1D(filters=4, kernel_size=4, padding="same",
                                 activation="relu",
                                 input_shape=self.input_shape))
-        model.add(Convolution1D(filters=64, kernel_size=3, padding="same",
+        model.add(Convolution1D(filters=4, kernel_size=4, padding="same",
                                 activation="relu"))
         # model.add(MaxPooling1D())
         model.add(Dropout(0.5))
@@ -44,42 +44,50 @@ class Cnn1DSingleChannelModel(Model):
         # model.add(MaxPooling1D())
         # model.add(Dropout(0.5))
 
-        model.add(Convolution1D(filters=32, kernel_size=3, padding="same",
+        model.add(Convolution1D(filters=8, kernel_size=4, padding="same",
                                 activation="relu"))
 
-        model.add(Convolution1D(filters=32, kernel_size=3, padding="same",
+        model.add(Convolution1D(filters=8, kernel_size=4, padding="same",
                                 activation="relu"))
-        # model.add(MaxPooling1D())
+        model.add(MaxPooling1D())
         model.add(Dropout(0.5))
 
-        model.add(Convolution1D(filters=16, kernel_size=3, padding="same",
+        model.add(Convolution1D(filters=16, kernel_size=4, padding="same",
                                 activation="relu"))
 
-        model.add(Convolution1D(filters=16, kernel_size=3, padding="same",
+        model.add(Convolution1D(filters=16, kernel_size=4, padding="same",
                                 activation="relu"))
+        model.add(MaxPooling1D())
         model.add(Dropout(0.5))
 
-        model.add(Convolution1D(filters=8, kernel_size=3, padding="same",
+        model.add(Convolution1D(filters=32, kernel_size=4, padding="same",
                                 activation="relu"))
 
-        model.add(Convolution1D(filters=8, kernel_size=3, padding="same",
+        model.add(Convolution1D(filters=32, kernel_size=4, padding="same",
                                 activation="relu"))
+        model.add(MaxPooling1D())
         model.add(Dropout(0.5))
-        # model.add(MaxPooling1D())
+
+        # model.add(Convolution1D(filters=8, kernel_size=3, padding="same",
+        #                         activation="relu"))
+        #
+        # model.add(Convolution1D(filters=8, kernel_size=3, padding="same",
+        #                         activation="relu"))
+        # model.add(Dropout(0.5))
 
         model.add(Flatten())
 
-        model.add(Dense(1024, activation='relu'))
-        model.add(Dropout(0.5))
+        # model.add(Dense(1024, activation='relu'))
+        # model.add(Dropout(0.5))
         model.add(Dense(256, activation='relu'))
         model.add(Dropout(0.5))
 
-        model.add(Dense(1, activation='linear'))
-        # model.add(Dense(1, activation='sigmoid'))
+        # model.add(Dense(1, activation='linear'))
+        model.add(Dense(1, activation='sigmoid'))
 
         # opt = SGD(lr=0.05, momentum=0.0, decay=0.0, nesterov=False)
 
-        model.compile(loss=self.loss,
+        model.compile(loss="binary_crossentropy",
                       optimizer="adam",
                       # optimizer="sgd",
                       # optimizer=opt,
