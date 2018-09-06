@@ -5,7 +5,7 @@ from tensorflow.python.ops import array_ops
 import random
 import functools
 
-cost = 2
+cost = 1.5
 fp_cost = 1
 fn_cost = 0.5
 

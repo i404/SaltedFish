@@ -66,11 +66,16 @@ def evaluate_model(trail_name, reader, model):
     model.set_input_shape(shape)
     history = model.fit(t_features, t_targets)
 
-    p_target = model.predict(v_features)
-    for name, m_fun in [("acc", accuracy_score),
-                        ("recall", recall_score),
-                        ("precision", precision_score)]:
-        print(f"{name}: {m_fun(v_targets, p_target)}")
+    def print_performance(p_type, features, targets):
+        p_targets = model.predict(features)
+        for name, m_fun in [("acc", accuracy_score),
+                            ("recall", recall_score),
+                            ("precision", precision_score)]:
+            print(f"{p_type}_{name}: {m_fun(targets, p_targets)}", end="\t")
+        print()
+
+    print_performance("train", t_features, t_targets)
+    print_performance("test", v_features, v_targets)
 
     plt.plot(history.history["loss"][1:])
     plt.plot(history.history["val_loss"][1:])
@@ -115,17 +120,16 @@ if __name__ == "__main__":
 
     models_lst = [
 
-        ("multi_channel_cnn_32",
-         CnnFormatReader(MatrixReader(data_path, index_file, 32),
-                         cnn_dim=1),
-         Cnn1DMultiChannelModel(batch_size=4096, epochs=600,
-                                early_stop_epochs=20, verbose=verbose)),
-
         ("single_channel_cnn_32",
          CnnFormatReader(SequenceReader(data_path, index_file, 32), cnn_dim=1),
          Cnn1DSingleChannelModel(batch_size=4096, epochs=600,
                                  early_stop_epochs=20, verbose=verbose)),
 
+        ("multi_channel_cnn_32",
+         CnnFormatReader(MatrixReader(data_path, index_file, 32),
+                         cnn_dim=1),
+         Cnn1DMultiChannelModel(batch_size=4096, epochs=600,
+                                early_stop_epochs=20, verbose=verbose)),
 
 
         # ("multi_channel_cnn_2",
