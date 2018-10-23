@@ -1,14 +1,16 @@
 from stock_reader import SequenceReader, CnnFormatReader, MatrixReader
-from models import DenseModel, Cnn1DSingleChannelModel, Cnn2DModel, Cnn1DMultiChannelModel
+from models import Cnn1DSingleChannelModel, Cnn1DMultiChannelModel
 import matplotlib.pyplot as plt
 from sklearn.metrics import accuracy_score, recall_score, precision_score
-import numpy as np
 import time
 import os
+from tensorflow import logging
+
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+logging.set_verbosity(logging.WARN)
 
 
 def timer(fun):
-
     def tmp(name, reader, model):
         beg_time = time.time()
         print(f"start at {beg_time}")
@@ -28,13 +30,12 @@ def timer(fun):
 def save_figure(file_name, path="fig"):
     if not os.path.exists(path):
         os.mkdir(path)
-    file_name = f"{file_name}_{int(time.time())}"
+    file_name = f"{file_name}_{int(time.time())}.png"
     plt.savefig(os.path.join(path, file_name))
     plt.clf()
 
 
 def top_n_precision(y_pred, y_true, ids):
-
     pred_label_id_lst = list(zip(y_pred, y_true, ids))
     sorted_lst = sorted(pred_label_id_lst, key=lambda x: x[0], reverse=True)
 
@@ -53,7 +54,6 @@ def top_n_precision(y_pred, y_true, ids):
 
 @timer
 def evaluate_model(trail_name, reader, model):
-
     data_dict = reader.load_raw_data()
     t_targets = data_dict.get("train_targets")
     t_features = data_dict.get("train_features")
@@ -75,18 +75,10 @@ def evaluate_model(trail_name, reader, model):
         print()
 
     print_performance("train", t_features, t_targets)
-    print_performance("test", v_features, v_targets)
+    print_performance("validation", v_features, v_targets)
 
     plt.plot(history.history["loss"][1:])
     plt.plot(history.history["val_loss"][1:])
-    # plt.plot(history.history["acc"])
-    # plt.plot(history.history["val_acc"])
-
-    # print(history.history["acc"][-10:])
-    # print(history.history["val_acc"][-10:])
-    # print(history.history["loss"][-10:])
-    # print(history.history["val_loss"][-10:])
-    # plt.show()
     save_figure(trail_name, "fig")
 
     p_prob = model.predict_prob(v_features)
@@ -106,9 +98,11 @@ def evaluate_model(trail_name, reader, model):
 if __name__ == "__main__":
 
     import argparse
+
     parser = argparse.ArgumentParser(description='process stock data')
     parser.add_argument("-v", "--verbose", help="verbose of keras",
                         type=int, default=0)
+
     parser.add_argument("-i", "--input_data", help="path of stock data",
                         type=str, default="data_test")
 
@@ -119,40 +113,15 @@ if __name__ == "__main__":
     verbose = args.verbose
 
     models_lst = [
-
         ("single_channel_cnn_32",
          CnnFormatReader(SequenceReader(data_path, index_file, 32), cnn_dim=1),
-         Cnn1DSingleChannelModel(batch_size=4096, epochs=600,
-                                 early_stop_epochs=20, verbose=verbose)),
+         Cnn1DSingleChannelModel(batch_size=32, epochs=600, min_iter_num=10,
+                                 early_stop_epochs=10, verbose=verbose)),
 
         ("multi_channel_cnn_32",
-         CnnFormatReader(MatrixReader(data_path, index_file, 32),
-                         cnn_dim=1),
-         Cnn1DMultiChannelModel(batch_size=4096, epochs=600,
-                                early_stop_epochs=20, verbose=verbose)),
-
-
-        # ("multi_channel_cnn_2",
-        #  CnnFormatReader(MatrixReader(data_path, index_file, 32),
-        #                  cnn_dim=1),
-        #  Cnn1DMultiChannelModel(batch_size=4096, epochs=600,
-        #                         early_stop_epochs=20, verbose=verbose)),
-        #
-        # ("multi_channel_cnn_3",
-        #  CnnFormatReader(MatrixReader(data_path, index_file, 32),
-        #                  cnn_dim=1),
-        #  Cnn1DMultiChannelModel(batch_size=4096, epochs=600,
-        #                         early_stop_epochs=20, verbose=verbose)),
-        #
-        # ("multi_channel_cnn_4",
-        #  CnnFormatReader(MatrixReader(data_path, index_file, 32),
-        #                  cnn_dim=1),
-        #  Cnn1DMultiChannelModel(batch_size=4096, epochs=600,
-        #                         early_stop_epochs=20, verbose=verbose)),
-
-        # ("multi_channel_cnn",
-        #  CnnFormatReader(MatrixReader(data_path, index_file), cnn_dim=2),
-        #  Cnn2DModel(batch_size=32, epochs=15, early_stop_epochs=4, verbose=verbose))
+         CnnFormatReader(MatrixReader(data_path, index_file, 32), cnn_dim=1),
+         Cnn1DMultiChannelModel(batch_size=32, epochs=600, min_iter_num=10,
+                                early_stop_epochs=10, verbose=verbose)),
     ]
 
     # for reader, model in [models_lst[0], models_lst[1]]:

@@ -12,6 +12,7 @@ class AutoEncoder(object):
 
     def encode(self, features):
         l1_penalty = 0
+        regular = regularizers.l1(l1_penalty)
 
         input_dim = features.shape[1]
 
@@ -19,24 +20,24 @@ class AutoEncoder(object):
 
         encoder = Sequential()
         encoder.add(Dense(200, input_shape=(input_dim,), activation="relu",
-                          activity_regularizer=regularizers.l1(l1_penalty)))
+                          activity_regularizer=regular))
         encoder.add(Dropout(0.2))
         encoder.add(Dense(150, activation="relu",
-                          activity_regularizer=regularizers.l1(l1_penalty)))
+                          activity_regularizer=regular))
         encoder.add(Dropout(0.2))
         encoder.add(Dense(self.encoding_dim, activation="relu",
-                          activity_regularizer=regularizers.l1(l1_penalty)))
+                          activity_regularizer=regular))
 
         autoencoder = Sequential()
         autoencoder.add(encoder)
         autoencoder.add(Dense(150, activation="relu",
-                              activity_regularizer=regularizers.l1(l1_penalty)))
+                              activity_regularizer=regular))
         autoencoder.add(Dropout(0.2))
         autoencoder.add(Dense(200, activation="relu",
-                              activity_regularizer=regularizers.l1(l1_penalty)))
+                              activity_regularizer=regular))
         autoencoder.add(Dropout(0.2))
         autoencoder.add(Dense(input_dim, activation="sigmoid",
-                              activity_regularizer=regularizers.l1(l1_penalty)))
+                              activity_regularizer=regular))
 
         autoencoder.compile(optimizer='adadelta', loss='binary_crossentropy')
         autoencoder.fit(train, train,

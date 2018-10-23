@@ -7,8 +7,8 @@ from models.early_stop_with_low_bound import EarlyStoppingWithLowBound
 class Model(object):
 
     def __init__(self, input_shape=None, validation_split=0.3,
-                 batch_size=2048, epochs=100, normalize=False,
-                 early_stop_epochs=None, min_iter_num=50, verbose=1):
+                 batch_size=32, epochs=100, normalize=False,
+                 early_stop_epochs=None, min_iter_num=30, verbose=1):
 
         self.validation_split = validation_split
         self.batch_size = batch_size
@@ -49,7 +49,8 @@ class Model(object):
 
         history = self.model.fit(
             x, y, epochs=self.epochs, batch_size=self.batch_size,
-            verbose=self.verbose, validation_split=self.validation_split, callbacks=self.callbacks)
+            verbose=self.verbose, validation_split=self.validation_split,
+            callbacks=self.callbacks)
         return history
 
     def predict(self, x):

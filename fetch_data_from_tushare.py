@@ -4,7 +4,7 @@ from util import config
 import pandas as pd
 # -*- coding: utf-8 -*-
 
-start_time = "2017-01-01"
+start_time = "2017-09-01"
 index_url = f"http://quotes.money.163.com/service/chddata.html?" + \
             f"code=0000001&start={start_time.replace('-', '')}"
 
@@ -52,5 +52,8 @@ if __name__ == "__main__":
         get_stock_list(list_file)
 
         for name, code in stock_name_code_from_file(list_file):
-            print(f"downloading {name}_{code}", end="")
-            get_stock_data_and_save(name, code)
+            if name.__contains__("ST"):
+                print(f"drop {name}_{code}")
+            else:
+                print(f"downloading {name}_{code}")
+                get_stock_data_and_save(name, code)

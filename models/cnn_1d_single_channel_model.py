@@ -1,6 +1,7 @@
 import keras
 from keras import Sequential
-from keras.layers import Dense, Convolution1D, Dropout, Flatten, MaxPooling1D
+from keras.layers import Dense, Convolution1D, Dropout, Flatten, MaxPooling1D, \
+    BatchNormalization
 from keras.metrics import top_k_categorical_accuracy
 from keras.optimizers import SGD
 
@@ -10,7 +11,7 @@ from util import bias_mean_square_error, bias_mean_abs_error, bias_binary_crosse
 
 class Cnn1DSingleChannelModel(Model):
 
-    def __init__(self, epochs=500, batch_size=32,
+    def __init__(self, epochs=500, batch_size=32, min_iter_num=20,
                  early_stop_epochs=None, verbose=1):
         # self.loss = keras.losses.mean_squared_error
         # self.loss = keras.losses.mean_absolute_error
@@ -20,6 +21,7 @@ class Cnn1DSingleChannelModel(Model):
         # self.loss = "binary_crossentropy"
         self.kernel_size = 4
         super().__init__(epochs=epochs, batch_size=batch_size,
+                         min_iter_num=min_iter_num,
                          early_stop_epochs=early_stop_epochs, verbose=verbose)
 
     def _create(self):
@@ -29,37 +31,34 @@ class Cnn1DSingleChannelModel(Model):
 
         model = Sequential()
 
-        model.add(Convolution1D(filters=8, kernel_size=self.kernel_size, padding="same",
-                                activation="relu",
+        model.add(Convolution1D(filters=64, kernel_size=self.kernel_size,
+                                padding="same", activation="relu",
+                                # kernel_regularizer="l1",
                                 input_shape=self.input_shape))
-        model.add(Dropout(0.5))
+        model.add(BatchNormalization())
+        # model.add(Dropout(0.5))
 
-        model.add(Convolution1D(filters=16, kernel_size=self.kernel_size, padding="same",
-                                activation="relu"))
+        model.add(Convolution1D(filters=32, kernel_size=self.kernel_size,
+                                # kernel_regularizer="l1",
+                                padding="same", activation="relu"))
+        model.add(BatchNormalization())
         # model.add(MaxPooling1D())
-        model.add(Dropout(0.5))
+        # model.add(Dropout(0.5))
 
-        model.add(Convolution1D(filters=32, kernel_size=self.kernel_size, padding="same",
-                                activation="relu"))
+        model.add(Convolution1D(filters=16, kernel_size=self.kernel_size,
+                                # kernel_regularizer="l1",
+                                padding="same", activation="relu"))
+        model.add(BatchNormalization())
         # model.add(MaxPooling1D())
-        model.add(Dropout(0.5))
-
-        model.add(Convolution1D(filters=64, kernel_size=self.kernel_size, padding="same",
-                                activation="relu"))
-        # model.add(MaxPooling1D())
-        model.add(Dropout(0.5))
-
-        model.add(Convolution1D(filters=128, kernel_size=self.kernel_size, padding="same",
-                                activation="relu"))
-        # model.add(MaxPooling1D())
-        model.add(Dropout(0.5))
+        model.add(Dropout(0.4))
 
         model.add(Flatten())
 
         # model.add(Dense(512, activation='relu'))
         # model.add(Dropout(0.5))
-        model.add(Dense(128, activation='relu'))
-        model.add(Dropout(0.5))
+        model.add(Dense(512, activation='relu'))
+        model.add(BatchNormalization())
+        # model.add(Dropout(0.5))
 
         # model.add(Dense(1, activation='linear'))
         model.add(Dense(1, activation='sigmoid'))
@@ -72,5 +71,5 @@ class Cnn1DSingleChannelModel(Model):
             optimizer="adam",
             # optimizer="sgd",
             #  optimizer=opt,
-            metrics=['accuracy', tf_precision])
+            metrics=['accuracy'])
         return model

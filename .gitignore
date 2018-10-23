@@ -109,3 +109,4 @@ data/
 *.csv
 model_res_*
 *.png
+*.eps
