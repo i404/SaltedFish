@@ -2,11 +2,11 @@ import keras
 from keras import Sequential
 from keras.layers import Conv2D, Dropout, Flatten, Dense, MaxPooling2D
 
-from util import config
-from models import Model
+from models import BasicModel
+from reprocess import reshape_2d_feature_for_2d_cnn
 
 
-class Cnn2DModel(Model):
+class Cnn2DModel(BasicModel):
 
     def __init__(self, epochs=20, batch_size=16,
                  early_stop_epochs=None, verbose=1):
@@ -14,6 +14,11 @@ class Cnn2DModel(Model):
         # self._batch_size = 16
         super().__init__(epochs=epochs, batch_size=batch_size,
                          early_stop_epochs=early_stop_epochs, verbose=verbose)
+
+    def _reshape_input(self, raw_features):
+        shape, feature = reshape_2d_feature_for_2d_cnn(raw_features)
+        self.input_shape = shape
+        return feature
 
     def _create(self):
 

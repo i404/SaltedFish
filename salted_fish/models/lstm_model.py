@@ -1,10 +1,10 @@
 from keras import Sequential, optimizers
 from keras.layers import LSTM, Dropout, Activation, Dense
 
-from models import Model
+from models import BasicModel
 
 
-class LstmModel(Model):
+class LstmModel(BasicModel):
 
     def __init__(self):
         self.timesteps = 20
@@ -12,6 +12,9 @@ class LstmModel(Model):
         self._epochs = 200
 
         super().__init__()
+
+    def _reshape_input(self, features):
+        return features
 
     def _create(self):
         model = Sequential()

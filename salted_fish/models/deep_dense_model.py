@@ -1,11 +1,14 @@
 from keras import Sequential
 from keras.layers import Dropout, Dense
 
+from models import BasicModel
 from util import bias_binary_crossentropy
-from models import Model
 
 
-class DeepDenseModel(Model):
+class DeepDenseModel(BasicModel):
+
+    def _reshape_input(self, features):
+        return features
 
     def __init__(self, input_shape=(64,), epochs=500):
         # self.input_dim = 64

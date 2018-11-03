@@ -1,6 +1,5 @@
 import tushare as ts
 import os
-from util import config
 import pandas as pd
 # -*- coding: utf-8 -*-
 

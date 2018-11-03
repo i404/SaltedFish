@@ -1,13 +1,12 @@
-import keras
 from keras import Sequential
-from keras.layers import Dense, Convolution1D, Dropout, Flatten, MaxPooling1D, \
-    BatchNormalization
+from keras.layers import Dense, Convolution1D, Dropout, Flatten, BatchNormalization
 
-from models import Model
-from util import bias_mean_square_error, bias_mean_abs_error, bias_binary_crossentropy
+from models import BasicModel
+from reprocess import reshape_2d_feature_for_1d_cnn
+from util import bias_mean_abs_error
 
 
-class Cnn1DMultiChannelModel(Model):
+class Cnn1DMultiChannelModel(BasicModel):
 
     def __init__(self, epochs=500, batch_size=32, min_iter_num=10,
                  early_stop_epochs=None, verbose=1):
@@ -20,10 +19,12 @@ class Cnn1DMultiChannelModel(Model):
                          min_iter_num=min_iter_num,
                          early_stop_epochs=early_stop_epochs, verbose=verbose)
 
-    def _create(self):
+    def _reshape_input(self, raw_features):
+        shape, feature = reshape_2d_feature_for_1d_cnn(raw_features)
+        self.input_shape = shape
+        return feature
 
-        if self.input_shape is None:
-            raise ValueError("input_shape is not set")
+    def _create(self):
 
         model = Sequential()
 
