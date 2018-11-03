@@ -16,9 +16,30 @@ def read_dfs_from_path(file_path):
             print(f"read {stock_file} fails")
 
 
+def change_to_percent(value, open_value):
+    raw = ((value - open_value) / open_value) * 10.0
+    return np.array([format_result(x) for x in raw])
+
+
+def format_result(x):
+    if x > 1:
+        xx = 1
+    elif x < -1:
+        xx = -1
+    else:
+        xx = x
+    return (xx + 1) / 2
+
+
 def read_csv_from_file(file_name, stock_id):
-    def change_percent(x):
-        return ((x - open_value) / open_value) * 10.0
+    # def change_percent(x):
+    #     # return ((x - open_value) / open_value) * 10.0
+    #     raw = ((x - open_value) / open_value) * 10.0
+    #     if raw > 1:
+    #         raw = 1
+    #     elif raw < -1:
+    #         raw = -1
+    #     return (raw + 1) / 2
 
     df = pd.read_csv(file_name)
     open_value = df['open'].values
@@ -27,9 +48,9 @@ def read_csv_from_file(file_name, stock_id):
     low_value = df['low'].values
     df['stock_id'] = stock_id
 
-    df['change_percent'] = change_percent(close_value)
-    df['high_percent'] = change_percent(high_value)
-    df['low_percent'] = change_percent(low_value)
+    df['change_percent'] = change_to_percent(close_value, open_value)
+    df['high_percent'] = change_to_percent(high_value, open_value)
+    df['low_percent'] = change_to_percent(low_value, open_value)
     return df.iloc[::-1]
 
 

@@ -1,7 +1,6 @@
 from keras.wrappers.scikit_learn import KerasClassifier
 from sklearn.model_selection import StratifiedShuffleSplit, cross_validate
 
-from reprocess import NormalizeWithCDF
 from .early_stop_with_low_bound import EarlyStoppingWithLowBound
 
 
@@ -27,8 +26,6 @@ class BasicModel(object):
         # self._default_cv_num = 10
 
         self._metrics = ['accuracy', 'precision', 'recall']
-
-        self.normalizer = NormalizeWithCDF()
 
         # todo: choose better `monitor` for early stop
         if self.early_stop_epochs is not None:

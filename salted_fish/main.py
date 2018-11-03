@@ -114,9 +114,9 @@ if __name__ == "__main__":
         ("multi_channel_cnn_32",
          MatrixReader(data_path, index_file, 32),
          Cnn1DMultiChannelModel(batch_size=32,
-                                epochs=600,
-                                min_iter_num=10,
-                                early_stop_epochs=10,
+                                epochs=50,
+                                min_iter_num=5,
+                                early_stop_epochs=5,
                                 verbose=verbose)),
     ]
 
