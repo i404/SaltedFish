@@ -3,6 +3,8 @@ import pandas as pd
 import numpy as np
 from datetime import datetime as dt
 
+from sklearn.preprocessing import MinMaxScaler
+
 from stock_reader import Reader
 
 
@@ -78,6 +80,9 @@ class BasicReader(Reader):
         self.index_data = pd.read_csv(index_file)[['日期', '涨跌幅']]
         self.index_data.columns = ["date", "index_change"]
         self.start_date = self.index_data.iloc[0]['date']
+        scaler = MinMaxScaler()
+        self.index_data["index_change"] = scaler.fit_transform(
+            self.index_data["index_change"].values.reshape(-1, 1))
         self.index_length = self.index_data.shape[0]
 
     def get_feature_from_df(self, df):
