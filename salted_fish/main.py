@@ -1,12 +1,14 @@
+"""
+main of salted fish
+"""
+
+import os
 import matplotlib.pyplot as plt
 from sklearn.metrics import accuracy_score, recall_score, precision_score
-import os
 from tensorflow import logging
 
 from models import Cnn1DMultiChannelModel, CnnWithEmbedding
-from models import Cnn1DSingleChannelModel
 from stock_reader import MatrixReader, MatrixReaderWithId
-from stock_reader import SequenceReader
 from util import timer
 from util.utils import save_figure
 
@@ -77,8 +79,7 @@ def evaluate_model(trail_name, reader, model):
     top_n_precision(p_pred_lst, v_targets_lst, stock_codes)
 
 
-if __name__ == "__main__":
-
+def main():
     import argparse
 
     parser = argparse.ArgumentParser(description='process stock data')
@@ -102,11 +103,14 @@ if __name__ == "__main__":
         ("multi_channel_cnn_with_embedding",
          MatrixReaderWithId(data_path, index_file, 32),
          CnnWithEmbedding(stock_num=3600,
-                          embedding_dim=100,
-                          cnn_filter_nums=[32, 16, 8],
-                          dense_layer_nodes=[32, 16, 8],
-                          kernel_size=3,
-                          epochs=50, early_stop_epochs=5,
+                          embedding_dim=128,
+                          cnn_filter_nums=[128, 64, 32, 16],
+                          cnn_kernel_size=3,
+                          cnn_feature_num=256,
+                          dense_layer_nodes=[128, 64, 32, 16],
+                          dense_layer_dropout=[0.0, 0.1, 0.2, 0.2],
+                          epochs=50,
+                          early_stop_epochs=5,
                           min_iter_num=5,
                           batch_size=32,
                           verbose=verbose)),
@@ -123,3 +127,7 @@ if __name__ == "__main__":
     # for reader, model in [models_lst[0], models_lst[1]]:
     for name, reader, model in models_lst:
         evaluate_model(name, reader, model)
+
+
+if __name__ == "__main__":
+    main()
