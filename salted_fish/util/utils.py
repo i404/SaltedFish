@@ -26,3 +26,17 @@ def timer(fun):
 
     return tmp
 
+
+def memorize_df(fun):
+    memo = {}
+
+    def tmp(file_name, stock_id=None):
+        if file_name not in memo:
+            # print(f"read new file {file_name}")
+            if stock_id is None:
+                memo[file_name] = fun(file_name)
+            else:
+                memo[file_name] = fun(file_name, stock_id)
+        return memo[file_name]
+
+    return tmp

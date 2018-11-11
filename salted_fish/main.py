@@ -7,8 +7,10 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import accuracy_score, recall_score, precision_score
 from tensorflow import logging
 
-from models import Cnn1DMultiChannelModel, CnnWithEmbedding
-from stock_reader import MatrixReader, MatrixReaderWithId
+from models import Cnn1DMultiChannelModel, CnnWithEmbedding, \
+    CnnWithEmbeddingAndStatus
+from stock_reader import MatrixReader, MatrixReaderWithId, \
+    MatrixReaderWithIdAndStatus
 from util import timer
 from util.utils import save_figure
 
@@ -96,32 +98,46 @@ def main():
     verbose = args.verbose
 
     models_lst = [
-        # ("single_channel_cnn_32",
-        #  SequenceReader(data_path, index_file, 32),
-        #  Cnn1DSingleChannelModel(batch_size=32, epochs=600, min_iter_num=10,
-        #                          early_stop_epochs=10, verbose=verbose)),
+        ("multi_channel_cnn_with_embedding_and_total_status",
+         MatrixReaderWithIdAndStatus(data_path, index_file, 32),
+         CnnWithEmbeddingAndStatus(
+             embedding_dim=128,
+             cnn_filter_nums=[128, 64, 32, 16],
+             cnn_kernel_size=3,
+             cnn_feature_num=256,
+             dense_layer_nodes=[128, 64, 32, 16],
+             dense_layer_dropout=[0.0, 0.1, 0.2, 0.2],
+             total_status_embedding_dim=512,
+             epochs=50,
+             early_stop_epochs=5,
+             min_iter_num=5,
+             batch_size=32,
+             verbose=verbose)),
+
         ("multi_channel_cnn_with_embedding",
          MatrixReaderWithId(data_path, index_file, 32),
-         CnnWithEmbedding(stock_num=3600,
-                          embedding_dim=128,
-                          cnn_filter_nums=[128, 64, 32, 16],
-                          cnn_kernel_size=3,
-                          cnn_feature_num=256,
-                          dense_layer_nodes=[128, 64, 32, 16],
-                          dense_layer_dropout=[0.0, 0.1, 0.2, 0.2],
-                          epochs=50,
-                          early_stop_epochs=5,
-                          min_iter_num=5,
-                          batch_size=32,
-                          verbose=verbose)),
+         CnnWithEmbedding(
+             stock_num=3600,
+             embedding_dim=128,
+             cnn_filter_nums=[128, 64, 32, 16],
+             cnn_kernel_size=3,
+             cnn_feature_num=256,
+             dense_layer_nodes=[128, 64, 32, 16],
+             dense_layer_dropout=[0.0, 0.1, 0.2, 0.2],
+             epochs=50,
+             early_stop_epochs=5,
+             min_iter_num=5,
+             batch_size=32,
+             verbose=verbose)),
 
         ("multi_channel_cnn_32",
          MatrixReader(data_path, index_file, 32),
-         Cnn1DMultiChannelModel(batch_size=32,
-                                epochs=50,
-                                min_iter_num=5,
-                                early_stop_epochs=5,
-                                verbose=verbose)),
+         Cnn1DMultiChannelModel(
+             batch_size=32,
+             epochs=50,
+             min_iter_num=5,
+             early_stop_epochs=5,
+             verbose=verbose)),
     ]
 
     # for reader, model in [models_lst[0], models_lst[1]]:

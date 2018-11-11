@@ -6,6 +6,17 @@ from datetime import datetime as dt
 from sklearn.preprocessing import MinMaxScaler
 
 from stock_reader import Reader
+from util import memorize_df
+
+
+def read_total_stock_change_status(index_file, stock_path):
+    res_df = read_index_from_file(index_file)[["date", "index_change_flag"]]
+    for cur_df, stock_code in read_dfs_from_path(stock_path):
+        cur_df = cur_df[["date", "change_flag"]]
+        cur_df.columns = ["date", stock_code]
+        res_df = res_df.join(cur_df.set_index("date"), on="date")
+        res_df = res_df.fillna(0.0)
+    return res_df.set_index("date").T.to_dict('list')
 
 
 def read_dfs_from_path(file_path):
@@ -18,30 +29,17 @@ def read_dfs_from_path(file_path):
             print(f"read {stock_file} fails")
 
 
-def change_to_percent(value, open_value):
-    raw = ((value - open_value) / open_value) * 10.0
-    return np.array([format_result(x) for x in raw])
+@memorize_df
+def read_index_from_file(index_file):
+    index_data = pd.read_csv(index_file)[['日期', '涨跌幅']]
+    index_data.columns = ["date", "index_change"]
+    change_flag = [1 if v > 0 else 0 for v in index_data["index_change"]]
+    index_data["index_change_flag"] = np.array(change_flag)
+    return index_data
 
 
-def format_result(x):
-    if x > 1:
-        xx = 1
-    elif x < -1:
-        xx = -1
-    else:
-        xx = x
-    return (xx + 1) / 2
-
-
+@memorize_df
 def read_csv_from_file(file_name, stock_id):
-    # def change_percent(x):
-    #     # return ((x - open_value) / open_value) * 10.0
-    #     raw = ((x - open_value) / open_value) * 10.0
-    #     if raw > 1:
-    #         raw = 1
-    #     elif raw < -1:
-    #         raw = -1
-    #     return (raw + 1) / 2
 
     df = pd.read_csv(file_name)
     open_value = df['open'].values
@@ -51,9 +49,32 @@ def read_csv_from_file(file_name, stock_id):
     df['stock_id'] = stock_id
 
     df['change_percent'] = change_to_percent(close_value, open_value)
+    change_flag = [1 if v > 0.5 else 0 for v in df["change_percent"]]
+    df['change_flag'] = np.array(change_flag)
     df['high_percent'] = change_to_percent(high_value, open_value)
     df['low_percent'] = change_to_percent(low_value, open_value)
     return df.iloc[::-1]
+
+
+def change_to_percent(value, open_value):
+    raw = ((value - open_value) / open_value) * 10.0
+    return np.array([format_result(x) for x in raw])
+
+
+def format_result(x):
+    """
+    original percent is supposed in [-1, 1]
+    format percent to [0, 1]
+    :param x: change percent of stock
+    :return: format percent
+    """
+    if x > 1:
+        xx = 1
+    elif x < -1:
+        xx = -1
+    else:
+        xx = x
+    return (xx + 1) / 2
 
 
 def compare_date(date_a, date_b, date_format="%Y-%m-%d"):
@@ -77,13 +98,17 @@ class BasicReader(Reader):
         self.sequence_length = sequence_length
         self.unit_df_length = self.sequence_length + 2
 
-        self.index_data = pd.read_csv(index_file)[['日期', '涨跌幅']]
-        self.index_data.columns = ["date", "index_change"]
-        self.start_date = self.index_data.iloc[0]['date']
+        self.index_data = read_index_from_file(index_file)[
+            ["date", "index_change"]]
         scaler = MinMaxScaler()
         self.index_data["index_change"] = scaler.fit_transform(
             self.index_data["index_change"].values.reshape(-1, 1))
+
+        self.start_date = self.index_data.iloc[0]['date']
         self.index_length = self.index_data.shape[0]
+
+        self.total_stock_change_status = read_total_stock_change_status(
+            index_file, path)
 
     def get_feature_from_df(self, df):
         raise NotImplementedError("get_feature_from_df")
