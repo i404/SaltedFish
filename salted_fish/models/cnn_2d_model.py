@@ -4,9 +4,14 @@ from keras.layers import Conv2D, Dropout, Flatten, Dense, MaxPooling2D
 
 from models import BasicModel
 from reprocess import reshape_2d_feature_for_2d_cnn
+from stock_reader import MatrixReader
 
 
 class Cnn2DModel(BasicModel):
+
+    def _create_reader(self):
+        return MatrixReader(
+            self.data_path, self.index_file, self.sequence_length)
 
     def __init__(self, epochs=20, batch_size=16,
                  early_stop_epochs=None, verbose=1):

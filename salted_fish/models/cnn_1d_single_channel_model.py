@@ -3,10 +3,15 @@ from keras.layers import Dense, Convolution1D, Dropout, Flatten, BatchNormalizat
 
 from models import BasicModel
 from reprocess import reshape_1d_feature_for_1d_cnn
+from stock_reader import SequenceReader
 from util import bias_mean_abs_error
 
 
 class Cnn1DSingleChannelModel(BasicModel):
+
+    def _create_reader(self):
+        return SequenceReader(
+            self.data_path, self.index_file, self.sequence_length)
 
     def __init__(self, epochs=500, batch_size=32, min_iter_num=20,
                  early_stop_epochs=None, verbose=1):

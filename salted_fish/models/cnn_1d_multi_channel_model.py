@@ -3,21 +3,23 @@ from keras.layers import Dense, Convolution1D, Dropout, Flatten, BatchNormalizat
 
 from models import BasicModel
 from reprocess import reshape_2d_feature_for_1d_cnn
+from stock_reader import MatrixReader
 from util import bias_mean_abs_error
 
 
 class Cnn1DMultiChannelModel(BasicModel):
 
-    def __init__(self, epochs=500, batch_size=32, min_iter_num=10,
-                 early_stop_epochs=None, verbose=1):
+    def _create_reader(self):
+        return MatrixReader(
+            self.data_path, self.index_file, self.sequence_length)
+
+    def __init__(self, *args, **kwargs):
         # self.loss = keras.losses.mean_squared_error
         # self.loss = keras.losses.mean_absolute_error
         # self.loss = bias_mean_square_error
         self.loss = bias_mean_abs_error
         self.kernel_size = 4
-        super().__init__(epochs=epochs, batch_size=batch_size,
-                         min_iter_num=min_iter_num,
-                         early_stop_epochs=early_stop_epochs, verbose=verbose)
+        super().__init__(*args, **kwargs)
 
     def _reshape_input(self, raw_features):
         shape, feature = reshape_2d_feature_for_1d_cnn(raw_features)

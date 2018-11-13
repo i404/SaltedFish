@@ -8,7 +8,8 @@ class BasicModel(object):
 
     def __init__(self, input_shape=None, validation_split=0.3,
                  batch_size=32, epochs=100, early_stop_epochs=None,
-                 min_iter_num=30, verbose=1):
+                 min_iter_num=30, data_path=None, index_file=None,
+                 sequence_length=32, verbose=1):
 
         self.validation_split = validation_split
         self.batch_size = batch_size
@@ -25,6 +26,11 @@ class BasicModel(object):
         # self._default_n_jobs = 1
         # self._default_cv_num = 10
 
+        self.data_path = data_path
+        self.index_file = index_file
+        self.sequence_length = sequence_length
+        self.reader = None
+
         self._metrics = ['accuracy', 'precision', 'recall']
 
         # todo: choose better `monitor` for early stop
@@ -38,6 +44,14 @@ class BasicModel(object):
             self.callbacks = None
 
         self.model = None
+
+    def get_reader(self):
+        if self.reader is None:
+            self.reader = self._create_reader()
+        return self.reader
+
+    def _create_reader(self):
+        raise NotImplementedError("create_reader")
 
     def _create(self):
         raise NotImplementedError("create")

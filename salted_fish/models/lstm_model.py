@@ -2,9 +2,14 @@ from keras import Sequential, optimizers
 from keras.layers import LSTM, Dropout, Activation, Dense
 
 from models import BasicModel
+from stock_reader import SequenceReader
 
 
 class LstmModel(BasicModel):
+
+    def _create_reader(self):
+        return SequenceReader(
+            self.data_path, self.index_file, self.sequence_length)
 
     def __init__(self):
         self.timesteps = 20

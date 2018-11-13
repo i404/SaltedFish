@@ -8,6 +8,7 @@ import numpy as np
 
 from reprocess import reshape_2d_feature_for_1d_cnn
 from models import BasicModel
+from stock_reader import MatrixReaderWithId
 
 
 def embedding_init(shape, name=None):
@@ -15,6 +16,10 @@ def embedding_init(shape, name=None):
 
 
 class CnnWithEmbedding(BasicModel):
+
+    def _create_reader(self):
+        return MatrixReaderWithId(
+            self.data_path, self.index_file, self.sequence_length)
 
     def __init__(
             self, stock_num=3600, embedding_dim=100,

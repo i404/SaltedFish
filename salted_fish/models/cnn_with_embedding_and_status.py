@@ -8,6 +8,7 @@ import numpy as np
 
 from reprocess import reshape_2d_feature_for_1d_cnn
 from models import BasicModel
+from stock_reader import MatrixReaderWithIdAndStatus
 
 
 def embedding_init(shape, name=None):
@@ -16,12 +17,16 @@ def embedding_init(shape, name=None):
 
 class CnnWithEmbeddingAndStatus(BasicModel):
 
+    def _create_reader(self):
+        return MatrixReaderWithIdAndStatus(
+            self.data_path, self.index_file, self.sequence_length)
+
     def __init__(
-            self, stock_num=None, embedding_dim=100,
+            self, stock_num=3600, embedding_dim=100,
             cnn_input_shape=None, cnn_filter_nums=None,
             cnn_kernel_size=3, cnn_feature_num=100,
             dense_layer_nodes=None, dense_layer_dropout=None,
-            total_status_embedding_dim=512,
+            single_day_change_status_embedding_dim=512,
             *args, **kwargs):
         if dense_layer_dropout is None:
             dense_layer_dropout = [0.1, 0.3, 0.5]
@@ -39,20 +44,20 @@ class CnnWithEmbeddingAndStatus(BasicModel):
         self.cnn_kernel_size = cnn_kernel_size
         self.cnn_feature_num = cnn_feature_num
 
-        self.total_stock_embedding_dim = total_status_embedding_dim
+        self.single_day_change_status_embedding_dim = \
+            single_day_change_status_embedding_dim
 
         super().__init__(*args, **kwargs)
 
     def _reshape_input(self, raw_features):
         seq_features = np.array([f[0] for f in raw_features])
         stock_ids = np.array([f[1] for f in raw_features])
-        total_status = np.array([f[2] for f in raw_features])
+        date_inds = np.array([f[2] for f in raw_features])
 
         shape, feature = reshape_2d_feature_for_1d_cnn(seq_features)
 
         self.cnn_input_shape = shape
-        self.stock_num = total_status.shape[1]
-        return [feature, stock_ids, total_status]
+        return [feature, stock_ids, date_inds]
 
     def _stock_embedding_part(self):
         """
@@ -96,26 +101,35 @@ class CnnWithEmbeddingAndStatus(BasicModel):
             name="seq_latent_dense")
         return seq_input, dense_layer(flatten_cnn_output)
 
-    def _total_change_status_part(self):
-        total_status = Input(
-            shape=(self.stock_num,),
-            dtype="float32",
-            name="total_stock_change_status")
-        dense_layer = Dense(
-            self.total_stock_embedding_dim,
-            activation="relu",
-            kernel_regularizer=regularizers.l1(0.0001),
-            name="total_change_status_dense")
-        return total_status, dense_layer(total_status)
+    def _single_day_change_status_part(self):
+        date_ind_status_dict = self.get_reader().single_day_stock_change_status
+        stock_num = len(date_ind_status_dict[0])
+        date_num = len(date_ind_status_dict)
+        embedding_matrix = np.zeros((date_num, stock_num))
+        for ind, status in date_ind_status_dict.items():
+            embedding_matrix[ind] = np.asarray(status, dtype="float32")
+
+        date_ind = Input(
+            shape=(1,),
+            dtype="int32",
+            name="date_index")
+        embedding_layer = Embedding(
+            input_dim=date_num,
+            output_dim=stock_num,
+            weights=[embedding_matrix],
+            input_length=1,
+            trainable=False,
+            name="single_day_status_dict")
+        return date_ind, Flatten()(embedding_layer(date_ind))
 
     def _create(self):
 
         stock_id, stock_latent = self._stock_embedding_part()
         seq_input, seq_latent = self._cnn_part()
-        total_stock_status, status_latents = self._total_change_status_part()
+        date_ind, date_latents = self._single_day_change_status_part()
 
         # MLP
-        mlp_inputs = [stock_latent, seq_latent, status_latents]
+        mlp_inputs = [stock_latent, seq_latent, date_latents]
         latents = concatenate(mlp_inputs)
         for i in range(0, len(self.dense_layer_nodes)):
             nodes = self.dense_layer_nodes[i]
@@ -133,7 +147,7 @@ class CnnWithEmbeddingAndStatus(BasicModel):
             activation='sigmoid',
             name="prediction")(latents)
 
-        input_lst = [seq_input, stock_id, total_stock_status]
+        input_lst = [seq_input, stock_id, date_ind]
         model = Model(inputs=input_lst, outputs=prediction)
 
         model.compile(

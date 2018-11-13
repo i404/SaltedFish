@@ -3,9 +3,14 @@ from keras.layers import Dense, Dropout
 from keras.losses import binary_crossentropy
 
 from models import BasicModel
+from stock_reader import SequenceReader
 
 
 class DenseModel(BasicModel):
+
+    def _create_reader(self):
+        return SequenceReader(
+            self.data_path, self.index_file, self.sequence_length)
 
     def __init__(self, input_shape=(20,), epochs=200):
         # self.input_dim = 20

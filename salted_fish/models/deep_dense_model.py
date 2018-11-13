@@ -2,10 +2,15 @@ from keras import Sequential
 from keras.layers import Dropout, Dense
 
 from models import BasicModel
+from stock_reader import SequenceReader
 from util import bias_binary_crossentropy
 
 
 class DeepDenseModel(BasicModel):
+
+    def _create_reader(self):
+        return SequenceReader(
+            self.data_path, self.index_file, self.sequence_length)
 
     def _reshape_input(self, features):
         return features

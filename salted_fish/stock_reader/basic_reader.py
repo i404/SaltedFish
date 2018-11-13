@@ -16,7 +16,13 @@ def read_total_stock_change_status(index_file, stock_path):
         cur_df.columns = ["date", stock_code]
         res_df = res_df.join(cur_df.set_index("date"), on="date")
         res_df = res_df.fillna(0.0)
-    return res_df.set_index("date").T.to_dict('list')
+    date_status_dict = res_df.set_index("date").T.to_dict('list')
+    date_ind_dict = {}
+    ind_status_dict = {}
+    for ind, (date, status) in enumerate(date_status_dict.items()):
+        date_ind_dict[date] = ind
+        ind_status_dict[ind] = status
+    return date_ind_dict, ind_status_dict
 
 
 def read_dfs_from_path(file_path):
@@ -33,8 +39,14 @@ def read_dfs_from_path(file_path):
 def read_index_from_file(index_file):
     index_data = pd.read_csv(index_file)[['日期', '涨跌幅']]
     index_data.columns = ["date", "index_change"]
+
     change_flag = [1 if v > 0 else 0 for v in index_data["index_change"]]
     index_data["index_change_flag"] = np.array(change_flag)
+
+    scaler = MinMaxScaler()
+    index_data["index_change"] = scaler.fit_transform(
+        index_data["index_change"].values.reshape(-1, 1))
+
     return index_data
 
 
@@ -51,6 +63,7 @@ def read_csv_from_file(file_name, stock_id):
     df['change_percent'] = change_to_percent(close_value, open_value)
     change_flag = [1 if v > 0.5 else 0 for v in df["change_percent"]]
     df['change_flag'] = np.array(change_flag)
+
     df['high_percent'] = change_to_percent(high_value, open_value)
     df['low_percent'] = change_to_percent(low_value, open_value)
     return df.iloc[::-1]
@@ -95,20 +108,18 @@ class BasicReader(Reader):
 
     def __init__(self, path, index_file, sequence_length=20):
         self.path = path
+        self.index_file = index_file
         self.sequence_length = sequence_length
         self.unit_df_length = self.sequence_length + 2
 
         self.index_data = read_index_from_file(index_file)[
             ["date", "index_change"]]
-        scaler = MinMaxScaler()
-        self.index_data["index_change"] = scaler.fit_transform(
-            self.index_data["index_change"].values.reshape(-1, 1))
 
         self.start_date = self.index_data.iloc[0]['date']
         self.index_length = self.index_data.shape[0]
 
-        self.total_stock_change_status = read_total_stock_change_status(
-            index_file, path)
+        self.single_day_stock_change_status = None
+        self.date_ind_dict = None
 
     def get_feature_from_df(self, df):
         raise NotImplementedError("get_feature_from_df")
