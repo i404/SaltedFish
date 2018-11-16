@@ -57,7 +57,7 @@ class Cnn1DMultiChannelModel(BasicModel):
                                 padding="same", activation="relu"))
         model.add(BatchNormalization())
         # model.add(MaxPooling1D())
-        model.add(Dropout(0.3))
+        model.add(Dropout(0.2))
 
         model.add(Flatten())
 

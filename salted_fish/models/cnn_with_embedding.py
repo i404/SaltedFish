@@ -65,7 +65,7 @@ class CnnWithEmbedding(BasicModel):
             output_dim=self.embedding_dim,
             name="stock_embedding",
             embeddings_initializer=embedding_init,
-            embeddings_regularizer=regularizers.l1(0.0001),
+            # embeddings_regularizer=regularizers.l1(0.0001),
             input_length=1)(stock_id)
         return stock_id, Flatten()(stock_embedding)
 
@@ -84,7 +84,7 @@ class CnnWithEmbedding(BasicModel):
                 kernel_size=self.cnn_kernel_size,
                 padding="same",
                 activation="relu",
-                kernel_regularizer=regularizers.l1(0.0001),
+                # kernel_regularizer=regularizers.l1(0.0001),
                 name=f"cnn_with_{filter_num}filters")
             cnn_output = cnn_layer(cnn_output)
             # cnn_output = BatchNormalization()(cnn_layer(cnn_output))
@@ -110,7 +110,7 @@ class CnnWithEmbedding(BasicModel):
             dense_latents = Dense(
                 nodes,
                 activation="relu",
-                kernel_regularizer=regularizers.l1(0.0001),
+                # kernel_regularizer=regularizers.l1(0.0001),
                 name=f"dense_with_{nodes}nodes")(latents)
             dropout_latents = Dropout(dropout_frac)(dense_latents)
             latents = BatchNormalization()(dropout_latents)

@@ -13,7 +13,7 @@ class Cnn1DSingleChannelModel(BasicModel):
         return SequenceReader(
             self.data_path, self.index_file, self.sequence_length)
 
-    def __init__(self, epochs=500, batch_size=32, min_iter_num=20,
+    def __init__(self, epochs=500, batch_size=32,
                  early_stop_epochs=None, verbose=1):
         # self.loss = keras.losses.mean_squared_error
         # self.loss = keras.losses.mean_absolute_error
@@ -23,7 +23,6 @@ class Cnn1DSingleChannelModel(BasicModel):
         # self.loss = "binary_crossentropy"
         self.kernel_size = 4
         super().__init__(epochs=epochs, batch_size=batch_size,
-                         min_iter_num=min_iter_num,
                          early_stop_epochs=early_stop_epochs, verbose=verbose)
 
     def _reshape_input(self, raw_features):

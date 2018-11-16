@@ -34,7 +34,7 @@ def top_n_precision(y_pred, y_true, codes):
 
 
 @timer
-def evaluate_model(trail_name, model):
+def evaluate_model(model):
     data_dict = model.get_reader().load_raw_data()
     train_targets = data_dict.get("train_targets")
     train_features = data_dict.get("train_features")
@@ -50,6 +50,8 @@ def evaluate_model(trail_name, model):
 
     def print_performance(p_type, features, targets):
         p_targets = model.predict(features)
+        print(f"{p_type}_positive_rate: {1.0 * sum(targets) / len(targets)}",
+              end="\t")
         for metric_name, m_fun in [("acc", accuracy_score),
                                    ("recall", recall_score),
                                    ("precision", precision_score)]:
@@ -63,6 +65,8 @@ def evaluate_model(trail_name, model):
 
     plt.plot(history.history["loss"][1:])
     plt.plot(history.history["val_loss"][1:])
+
+    trail_name = str(model).split(" ")[0].split(".")[-1]
     save_figure(plt, trail_name, "fig")
 
     p_prob = model.predict_prob(v_features)
@@ -97,48 +101,44 @@ def main():
     verbose = args.verbose
 
     models_lst = [
-        ("multi_channel_cnn_with_embedding_and_total_status",
-         CnnWithEmbeddingAndStatus(
-             stock_num=3600,
-             embedding_dim=256,
-             cnn_filter_nums=[128, 64, 32],
-             cnn_kernel_size=3,
-             cnn_feature_num=512,
-             single_day_change_status_embedding_dim=256,
-             dense_layer_nodes=[1024, 256, 32],
-             dense_layer_dropout=[0.1, 0.1, 0.2],
-             epochs=50,
-             early_stop_epochs=5,
-             min_iter_num=5,
-             batch_size=32,
-             data_path=data_path,
-             index_file=index_file,
-             sequence_length=sequence_length,
-             verbose=verbose)),
+        CnnWithEmbeddingAndStatus(
+            stock_num=3600,
+            embedding_dim=256,
+            cnn_filter_nums=[256, 128, 64, 32],
+            cnn_dropout=[0.1, 0.1, 0.1, 0.1],
+            cnn_kernel_size=3,
+            cnn_feature_num=512,
+            single_day_change_status_embedding_dim=512,
+            dense_layer_nodes=[1024, 512],
+            dense_layer_dropout=[0.1, 0.1],
+            learning_rate=0.001,
+            epochs=50,
+            early_stop_epochs=3,
+            batch_size=32,
+            data_path=data_path,
+            index_file=index_file,
+            sequence_length=sequence_length,
+            verbose=verbose),
 
-        ("multi_channel_cnn_with_embedding",
-         CnnWithEmbedding(
+        CnnWithEmbedding(
              stock_num=3600,
              embedding_dim=128,
-             cnn_filter_nums=[128, 64, 32, 16],
+             cnn_filter_nums=[128, 64, 32],
              cnn_kernel_size=3,
              cnn_feature_num=256,
              dense_layer_nodes=[512, 128, 32],
-             dense_layer_dropout=[0.0, 0.1, 0.2],
+             dense_layer_dropout=[0.1, 0.1, 0.1],
              epochs=50,
              early_stop_epochs=5,
-             min_iter_num=5,
              batch_size=32,
              data_path=data_path,
              index_file=index_file,
              sequence_length=sequence_length,
-             verbose=verbose)),
+             verbose=verbose),
 
-        ("multi_channel_cnn_32",
-         Cnn1DMultiChannelModel(
+        (Cnn1DMultiChannelModel(
              batch_size=32,
              epochs=50,
-             min_iter_num=5,
              early_stop_epochs=5,
              data_path=data_path,
              index_file=index_file,
@@ -147,8 +147,8 @@ def main():
     ]
 
     # for reader, model in [models_lst[0], models_lst[1]]:
-    for name, model in models_lst:
-        evaluate_model(name, model)
+    for model in models_lst:
+        evaluate_model(model)
 
 
 if __name__ == "__main__":

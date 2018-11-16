@@ -5,6 +5,7 @@ from keras.layers.merge import concatenate
 from keras.initializers import RandomNormal
 from keras import backend as K
 import numpy as np
+from keras.optimizers import Adam
 
 from reprocess import reshape_2d_feature_for_1d_cnn
 from models import BasicModel
@@ -24,16 +25,20 @@ class CnnWithEmbeddingAndStatus(BasicModel):
     def __init__(
             self, stock_num=3600, embedding_dim=100,
             cnn_input_shape=None, cnn_filter_nums=None,
-            cnn_kernel_size=3, cnn_feature_num=100,
+            cnn_dropout=None, cnn_kernel_size=3, cnn_feature_num=100,
             dense_layer_nodes=None, dense_layer_dropout=None,
             single_day_change_status_embedding_dim=512,
             *args, **kwargs):
-        if dense_layer_dropout is None:
-            dense_layer_dropout = [0.1, 0.3, 0.5]
-        self.dense_layer_dropout = dense_layer_dropout
         if cnn_filter_nums is None:
             cnn_filter_nums = [32, 16, 8]
         self.cnn_filter_nums = cnn_filter_nums
+        if cnn_dropout is None:
+            cnn_dropout = [0.1, 0.1, 0.1]
+        self.cnn_dropout = cnn_dropout
+
+        if dense_layer_dropout is None:
+            dense_layer_dropout = [0.1, 0.3, 0.5]
+        self.dense_layer_dropout = dense_layer_dropout
         if dense_layer_nodes is None:
             dense_layer_nodes = [32, 16, 8]
         self.dense_layer_nodes = dense_layer_nodes
@@ -70,9 +75,10 @@ class CnnWithEmbeddingAndStatus(BasicModel):
             output_dim=self.embedding_dim,
             name="stock_embedding",
             embeddings_initializer=embedding_init,
-            embeddings_regularizer=regularizers.l1(0.0001),
+            # embeddings_regularizer=regularizers.l1(0.0001),
             input_length=1)(stock_id)
-        return stock_id, Flatten()(stock_embedding)
+        stock_embedding_flatten = Flatten()(stock_embedding)
+        return stock_id, BatchNormalization()(stock_embedding_flatten)
 
     def _cnn_part(self):
         """
@@ -83,23 +89,26 @@ class CnnWithEmbeddingAndStatus(BasicModel):
                           dtype="float32",
                           name="stock_changes")
         cnn_output = seq_input
-        for filter_num in self.cnn_filter_nums:
+        for i in range(0, len(self.cnn_filter_nums)):
+            filter_num = self.cnn_filter_nums[i]
+            dropout_frac = self.cnn_dropout[i]
             cnn_layer = Convolution1D(
                 filters=filter_num,
                 kernel_size=self.cnn_kernel_size,
                 padding="same",
                 activation="relu",
-                kernel_regularizer=regularizers.l1(0.0001),
+                # kernel_regularizer=regularizers.l1(0.0001),
                 name=f"cnn_with_{filter_num}filters")
             cnn_output = cnn_layer(cnn_output)
-            # cnn_output = BatchNormalization()(cnn_layer(cnn_output))
+            cnn_output = Dropout(dropout_frac)(cnn_output)
+            cnn_output = BatchNormalization()(cnn_output)
 
         flatten_cnn_output = Flatten()(cnn_output)
-        dense_layer = Dense(
+        seq_latents = Dense(
             self.cnn_feature_num,
             activation="relu",
-            name="seq_latent_dense")
-        return seq_input, dense_layer(flatten_cnn_output)
+            name="seq_latent_dense")(flatten_cnn_output)
+        return seq_input, BatchNormalization()(seq_latents)
 
     def _single_day_change_status_part(self):
         date_ind_status_dict = self.get_reader().single_day_stock_change_status
@@ -113,14 +122,23 @@ class CnnWithEmbeddingAndStatus(BasicModel):
             shape=(1,),
             dtype="int32",
             name="date_index")
-        embedding_layer = Embedding(
+
+        single_day_change_status = Embedding(
             input_dim=date_num,
             output_dim=stock_num,
             weights=[embedding_matrix],
             input_length=1,
             trainable=False,
-            name="single_day_status_dict")
-        return date_ind, Flatten()(embedding_layer(date_ind))
+            name="single_day_status_dict")(date_ind)
+
+        single_day_status_latents = Dense(
+            self.single_day_change_status_embedding_dim,
+            activation="relu",
+            # kernel_regularizer=regularizers.l1(0.0001),
+            name=f"single_day_status_dense")(single_day_change_status)
+
+        flatten_latents = Flatten()(single_day_status_latents)
+        return date_ind, BatchNormalization()(flatten_latents)
 
     def _create(self):
 
@@ -137,7 +155,7 @@ class CnnWithEmbeddingAndStatus(BasicModel):
             dense_latents = Dense(
                 nodes,
                 activation="relu",
-                kernel_regularizer=regularizers.l1(0.0001),
+                # kernel_regularizer=regularizers.l1(0.00005),
                 name=f"dense_with_{nodes}nodes")(latents)
             dropout_latents = Dropout(dropout_frac)(dense_latents)
             latents = BatchNormalization()(dropout_latents)
@@ -149,9 +167,11 @@ class CnnWithEmbeddingAndStatus(BasicModel):
 
         input_lst = [seq_input, stock_id, date_ind]
         model = Model(inputs=input_lst, outputs=prediction)
+        model.summary()
 
+        adam = Adam(lr=self.learning_rate)
         model.compile(
-            optimizer="adam",
+            optimizer=adam,
             loss='binary_crossentropy',
             metrics=['accuracy'])
 
