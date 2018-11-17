@@ -1,11 +1,10 @@
 from keras import Input, regularizers, Model
 from keras.layers import Embedding, Flatten, Convolution1D, Dense, \
-    BatchNormalization, Dropout
+    BatchNormalization, Dropout, Lambda
 from keras.layers.merge import concatenate
 from keras.initializers import RandomNormal
 from keras import backend as K
 import numpy as np
-from keras.optimizers import Adam
 
 from reprocess import reshape_2d_feature_for_1d_cnn
 from models import BasicModel
@@ -16,7 +15,25 @@ def embedding_init(shape, name=None):
     return RandomNormal(mean=0.01, stddev=0.01, seed=None)(shape)
 
 
-class CnnWithEmbeddingAndStatus(BasicModel):
+def _layer_of_auto_encode_loss():
+    def rmse(tensor):
+        a, b = tensor
+        return K.square(K.mean(K.square(a - b)))
+
+    def output_shape(input_shapes):
+        shape1 = list(input_shapes[0])
+        shape2 = list(input_shapes[1])
+        assert shape1 == shape2
+        return (None, 1)
+
+    return Lambda(
+        function=rmse,
+        output_shape=output_shape,
+        name="auto_encode_loss"
+    )
+
+
+class CnnWithStatusAutoEncode(BasicModel):
 
     def _create_reader(self):
         return MatrixReaderWithIdAndStatus(
@@ -55,6 +72,15 @@ class CnnWithEmbeddingAndStatus(BasicModel):
         self.single_day_change_status_embedding_dim = \
             single_day_change_status_embedding_dim
 
+        self.loss = {
+            'prediction': 'binary_crossentropy',
+            'auto_encode_loss': 'mean_squared_error',
+        }
+        self.loss_weights = {
+            'prediction': 1.0,
+            'auto_encode_loss': 0.2,
+        }
+
     def _reshape_input(self, raw_features):
         seq_features = np.array([f[0] for f in raw_features])
         stock_ids = np.array([f[1] for f in raw_features])
@@ -64,6 +90,13 @@ class CnnWithEmbeddingAndStatus(BasicModel):
 
         self.cnn_input_shape = shape
         return [feature, stock_ids, date_inds]
+
+    def _reshape_target(self, target):
+        auto_encode_target = np.zeros(target.shape)
+        return {
+            "prediction": target,
+            "auto_encode_loss": auto_encode_target
+        }
 
     def _stock_embedding_part(self):
         """
@@ -132,20 +165,34 @@ class CnnWithEmbeddingAndStatus(BasicModel):
             trainable=False,
             name="single_day_status_dict")(date_ind)
 
+        # status feature
         single_day_status_latents = Dense(
             self.single_day_change_status_embedding_dim,
             activation="relu",
             # kernel_regularizer=regularizers.l1(0.0001),
             name=f"single_day_status_dense")(single_day_change_status)
 
+        # auto encoder output
+        auto_encode_output = Dense(
+            stock_num,
+            activation="relu",
+            name="status_auto_encode_output"
+        )(single_day_status_latents)
+
+        auto_encode_loss = _layer_of_auto_encode_loss()(
+            [auto_encode_output, single_day_change_status])
+
         flatten_latents = Flatten()(single_day_status_latents)
-        return date_ind, BatchNormalization()(flatten_latents)
+        status_latents = BatchNormalization()(flatten_latents)
+        return date_ind, status_latents, auto_encode_loss
 
     def _create(self):
 
         stock_id, stock_latent = self._stock_embedding_part()
         seq_input, seq_latent = self._cnn_part()
-        date_ind, date_latents = self._single_day_change_status_part()
+
+        date_ind, date_latents, auto_encode_loss = \
+            self._single_day_change_status_part()
 
         # MLP
         mlp_inputs = [stock_latent, seq_latent, date_latents]
@@ -166,7 +213,12 @@ class CnnWithEmbeddingAndStatus(BasicModel):
             activation='sigmoid',
             name="prediction")(latents)
 
-        input_lst = [seq_input, stock_id, date_ind]
-        model = Model(inputs=input_lst, outputs=prediction)
+        model = Model(
+            inputs=[seq_input, stock_id, date_ind],
+            outputs=[prediction, auto_encode_loss])
 
         return model
+
+    def predict_prob(self, x):
+        x = self._reshape_input(x)
+        return self.model.predict(x)[0]

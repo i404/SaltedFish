@@ -12,11 +12,10 @@ class LstmModel(BasicModel):
             self.data_path, self.index_file, self.sequence_length)
 
     def __init__(self):
+        super().__init__()
         self.timesteps = 20
         self.data_dim = 1
         self._epochs = 200
-
-        super().__init__()
 
     def _reshape_input(self, features):
         return features
@@ -32,12 +31,6 @@ class LstmModel(BasicModel):
         model.add(Dense(input_dim=100, output_dim=1))
         # model.add(Activation("linear"))
         model.add(Activation("sigmoid"))
-        rms = optimizers.RMSprop(lr=0.0001, rho=0.9, epsilon=1e-06)
-        # sgd = optimizers.sgd(lr=0.0001, decay=1e-6,
-        #                      momentum=0.9, nesterov=True)
-        # model.compile(loss="mean_squared_logarithmic_error", optimizer=rms,
-        # model.compile(loss="kullback_leibler_divergence", optimizer=rms,
-        model.compile(loss="binary_crossentropy", optimizer=rms,
-                      metrics=['accuracy'])
+
         return model
 

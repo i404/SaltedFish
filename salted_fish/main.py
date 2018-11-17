@@ -8,7 +8,7 @@ from sklearn.metrics import accuracy_score, recall_score, precision_score
 from tensorflow import logging
 
 from models import Cnn1DMultiChannelModel, CnnWithEmbedding, \
-    CnnWithEmbeddingAndStatus
+    CnnWithEmbeddingAndStatus, CnnWithStatusAutoEncode
 from util import timer
 from util.utils import save_figure
 
@@ -66,7 +66,7 @@ def evaluate_model(model):
     plt.plot(history.history["loss"][1:])
     plt.plot(history.history["val_loss"][1:])
 
-    trail_name = str(model).split(" ")[0].split(".")[-1]
+    trail_name = model.model_name()
     save_figure(plt, trail_name, "fig")
 
     p_prob = model.predict_prob(v_features)
@@ -101,6 +101,25 @@ def main():
     verbose = args.verbose
 
     models_lst = [
+        CnnWithStatusAutoEncode(
+            stock_num=3600,
+            embedding_dim=256,
+            cnn_filter_nums=[256, 128, 64, 32],
+            cnn_dropout=[0.1, 0.1, 0.1, 0.1],
+            cnn_kernel_size=3,
+            cnn_feature_num=512,
+            single_day_change_status_embedding_dim=512,
+            dense_layer_nodes=[1024, 512],
+            dense_layer_dropout=[0.1, 0.1],
+            learning_rate=0.001,
+            epochs=50,
+            early_stop_epochs=3,
+            batch_size=32,
+            data_path=data_path,
+            index_file=index_file,
+            sequence_length=sequence_length,
+            verbose=verbose),
+
         CnnWithEmbeddingAndStatus(
             stock_num=3600,
             embedding_dim=256,

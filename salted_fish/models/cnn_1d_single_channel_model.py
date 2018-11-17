@@ -13,17 +13,10 @@ class Cnn1DSingleChannelModel(BasicModel):
         return SequenceReader(
             self.data_path, self.index_file, self.sequence_length)
 
-    def __init__(self, epochs=500, batch_size=32,
-                 early_stop_epochs=None, verbose=1):
-        # self.loss = keras.losses.mean_squared_error
-        # self.loss = keras.losses.mean_absolute_error
-        # self.loss = bias_mean_square_error
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.loss = bias_mean_abs_error
-        # self.loss = bias_binary_crossentropy
-        # self.loss = "binary_crossentropy"
         self.kernel_size = 4
-        super().__init__(epochs=epochs, batch_size=batch_size,
-                         early_stop_epochs=early_stop_epochs, verbose=verbose)
 
     def _reshape_input(self, raw_features):
         shape, feature = reshape_1d_feature_for_1d_cnn(raw_features)
@@ -71,11 +64,4 @@ class Cnn1DSingleChannelModel(BasicModel):
 
         # opt = SGD(lr=0.05, momentum=0.0, decay=0.0, nesterov=False)
 
-        model.compile(
-            loss="binary_crossentropy",
-            # loss=bias_binary_crossentropy,
-            optimizer="adam",
-            # optimizer="sgd",
-            #  optimizer=opt,
-            metrics=['accuracy'])
         return model

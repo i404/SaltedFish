@@ -27,6 +27,9 @@ class CnnWithEmbedding(BasicModel):
             cnn_kernel_size=3, cnn_feature_num=100,
             dense_layer_nodes=None, dense_layer_dropout=None,
             *args, **kwargs):
+
+        super().__init__(*args, **kwargs)
+
         if dense_layer_dropout is None:
             dense_layer_dropout = [0.1, 0.3, 0.5]
         self.dense_layer_dropout = dense_layer_dropout
@@ -43,7 +46,6 @@ class CnnWithEmbedding(BasicModel):
         self.cnn_kernel_size = cnn_kernel_size
         self.cnn_feature_num = cnn_feature_num
 
-        super().__init__(*args, **kwargs)
 
     def _reshape_input(self, raw_features):
         seq_features = np.array([f[0] for f in raw_features])
@@ -121,10 +123,5 @@ class CnnWithEmbedding(BasicModel):
             name="prediction")(latents)
 
         model = Model(inputs=[seq_input, stock_id], outputs=prediction)
-
-        model.compile(
-            optimizer="adam",
-            loss='binary_crossentropy',
-            metrics=['accuracy'])
 
         return model
