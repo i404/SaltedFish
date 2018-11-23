@@ -1,6 +1,6 @@
 from keras import Input, regularizers, Model
 from keras.layers import Embedding, Flatten, Convolution1D, Dense, \
-    BatchNormalization, Dropout
+    BatchNormalization, Dropout, MaxPooling1D
 from keras.layers.merge import concatenate
 from keras.initializers import RandomNormal
 from keras import backend as K
@@ -57,13 +57,15 @@ class CnnWithEmbeddingAndStatus(BasicModel):
 
     def _reshape_input(self, raw_features):
         seq_features = np.array([f[0] for f in raw_features])
-        stock_ids = np.array([f[1] for f in raw_features])
-        date_inds = np.array([f[2] for f in raw_features])
+        # stock_ids = np.array([f[1] for f in raw_features])
+        # date_inds = np.array([f[2] for f in raw_features])
+        date_inds = np.array([f[1] for f in raw_features])
 
         shape, feature = reshape_2d_feature_for_1d_cnn(seq_features)
 
         self.cnn_input_shape = shape
-        return [feature, stock_ids, date_inds]
+        # return [feature, stock_ids, date_inds]
+        return [feature, date_inds]
 
     def _stock_embedding_part(self):
         """
@@ -104,7 +106,8 @@ class CnnWithEmbeddingAndStatus(BasicModel):
             cnn_output = Dropout(dropout_frac)(cnn_output)
             cnn_output = BatchNormalization()(cnn_output)
 
-        flatten_cnn_output = Flatten()(cnn_output)
+        pooled_output = MaxPooling1D()(cnn_output)
+        flatten_cnn_output = Flatten()(pooled_output)
         seq_latents = Dense(
             self.cnn_feature_num,
             activation="relu",
@@ -143,12 +146,13 @@ class CnnWithEmbeddingAndStatus(BasicModel):
 
     def _create(self):
 
-        stock_id, stock_latent = self._stock_embedding_part()
+        # stock_id, stock_latent = self._stock_embedding_part()
         seq_input, seq_latent = self._cnn_part()
         date_ind, date_latents = self._single_day_change_status_part()
 
         # MLP
-        mlp_inputs = [stock_latent, seq_latent, date_latents]
+        # mlp_inputs = [stock_latent, seq_latent, date_latents]
+        mlp_inputs = [seq_latent, date_latents]
         latents = concatenate(mlp_inputs)
         for i in range(0, len(self.dense_layer_nodes)):
             nodes = self.dense_layer_nodes[i]
@@ -166,7 +170,8 @@ class CnnWithEmbeddingAndStatus(BasicModel):
             activation='sigmoid',
             name="prediction")(latents)
 
-        input_lst = [seq_input, stock_id, date_ind]
+        # input_lst = [seq_input, stock_id, date_ind]
+        input_lst = [seq_input, date_ind]
         model = Model(inputs=input_lst, outputs=prediction)
 
         return model

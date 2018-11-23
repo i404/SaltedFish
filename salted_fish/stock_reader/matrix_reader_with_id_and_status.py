@@ -18,4 +18,5 @@ class MatrixReaderWithIdAndStatus(BasicReader):
         ids = df["stock_id"].values[0]
         date = df["date"].values[0]
         date_ind = self.date_ind_dict[date]
-        return seq_feature, ids, date_ind
+        # return seq_feature, ids, date_ind
+        return seq_feature, date_ind

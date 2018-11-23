@@ -110,3 +110,4 @@ data/
 model_res_*
 *.png
 *.eps
+*.bmp
