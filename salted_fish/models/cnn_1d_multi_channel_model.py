@@ -47,7 +47,7 @@ class Cnn1DMultiChannelModel(BasicModel):
                                 # kernel_regularizer="l1",
                                 padding="same", activation="relu"))
         model.add(BatchNormalization())
-        model.add(Dropout(0.2))
+        model.add(Dropout(0.4))
 
         model.add(Flatten())
 

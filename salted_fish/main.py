@@ -8,7 +8,7 @@ from sklearn.metrics import accuracy_score, recall_score, precision_score
 from tensorflow import logging
 
 from models import Cnn1DMultiChannelModel, CnnWithEmbedding, \
-    CnnWithEmbeddingAndStatus, CnnWithStatusAutoEncode
+    CnnWithSingleDayStatus, CnnWithStatusAutoEncode
 from util import timer
 from util.utils import save_figure
 
@@ -100,75 +100,35 @@ def main():
     sequence_length = 32
     verbose = args.verbose
 
-    models_lst = [
-        # CnnWithStatusAutoEncode(
-        #     stock_num=3600,
-        #     embedding_dim=256,
-        #     cnn_filter_nums=[256, 128, 64, 32],
-        #     cnn_dropout=[0.1, 0.1, 0.1, 0.1],
-        #     cnn_kernel_size=3,
-        #     cnn_feature_num=512,
-        #     single_day_change_status_embedding_dim=512,
-        #     dense_layer_nodes=[1024, 512],
-        #     dense_layer_dropout=[0.1, 0.1],
-        #     learning_rate=0.001,
-        #     epochs=50,
-        #     early_stop_epochs=3,
-        #     batch_size=32,
-        #     data_path=data_path,
-        #     index_file=index_file,
-        #     sequence_length=sequence_length,
-        #     verbose=verbose),
-
-        CnnWithEmbeddingAndStatus(
+    def create_model(dropout):
+        l1_lambda = 1e-3
+        model = CnnWithSingleDayStatus(
             stock_num=3600,
             embedding_dim=256,
             cnn_filter_nums=[256, 128, 64, 32],
-            cnn_dropout=[0.1, 0.1, 0.1, 0.1],
+            cnn_dropout=[0.0, 0.0, 0.0, 0.0],
+            cnn_regularize=[l1_lambda, l1_lambda, l1_lambda, l1_lambda],
             cnn_kernel_size=3,
             cnn_feature_num=512,
-            single_day_change_status_embedding_dim=512,
-            dense_layer_nodes=[2048, 1024, 512, 256, 128],
-            dense_layer_dropout=[0.1, 0.1, 0.1, 0.1, 0.2],
-            learning_rate=5e-5,
-            epochs=50,
-            early_stop_epochs=2,
-            batch_size=32,
-            data_path=data_path,
-            index_file=index_file,
-            sequence_length=sequence_length,
-            verbose=verbose),
-
-        CnnWithEmbedding(
-            stock_num=3600,
-            embedding_dim=128,
-            cnn_filter_nums=[128, 64, 32],
-            cnn_kernel_size=3,
-            cnn_feature_num=256,
-            dense_layer_nodes=[512, 128, 32],
-            dense_layer_dropout=[0.1, 0.1, 0.1],
+            single_day_change_status_embedding_dim=256,
+            status_embedding_regularize=l1_lambda,
+            dense_layer_nodes=[1024, 512],
+            dense_layer_dropout=[dropout, dropout],
+            dense_regularize=[l1_lambda, l1_lambda],
             learning_rate=1e-5,
             epochs=50,
-            early_stop_epochs=5,
+            early_stop_epochs=3,
             batch_size=32,
             data_path=data_path,
             index_file=index_file,
             sequence_length=sequence_length,
-            verbose=verbose),
-
-        (Cnn1DMultiChannelModel(
-             batch_size=32,
-             epochs=50,
-             early_stop_epochs=5,
-             data_path=data_path,
-             index_file=index_file,
-             sequence_length=sequence_length,
-             verbose=verbose)),
-    ]
+            verbose=verbose)
+        return model
 
     # for reader, model in [models_lst[0], models_lst[1]]:
-    for model in models_lst:
-        evaluate_model(model)
+    # for l1 in [1e-5, 1e-4, 1e-3, 1e-2, 1e-1]:
+    for d in [0.05, 0.1, 0.15, 0.2]:
+        evaluate_model(create_model(d))
 
 
 if __name__ == "__main__":
