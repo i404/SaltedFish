@@ -8,7 +8,8 @@ from sklearn.metrics import accuracy_score, recall_score, precision_score
 from tensorflow import logging
 
 from models import Cnn1DMultiChannelModel, CnnWithEmbedding, \
-    CnnWithSingleDayStatus, CnnWithStatusAutoEncode
+    CnnWithSingleDayStatus, CnnWithStatusAutoEncode, \
+    CnnWithSingleDayStatusEncode
 from util import timer
 from util.utils import save_figure
 
@@ -102,9 +103,7 @@ def main():
 
     def create_model(dropout):
         l1_lambda = 1e-3
-        model = CnnWithSingleDayStatus(
-            stock_num=3600,
-            embedding_dim=256,
+        model = CnnWithSingleDayStatusEncode(
             cnn_filter_nums=[256, 128, 64, 32],
             cnn_dropout=[0.0, 0.0, 0.0, 0.0],
             cnn_regularize=[l1_lambda, l1_lambda, l1_lambda, l1_lambda],
