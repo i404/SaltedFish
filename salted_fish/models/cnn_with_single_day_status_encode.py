@@ -10,6 +10,7 @@ from keras.optimizers import Adam
 from reprocess import reshape_2d_feature_for_1d_cnn
 from models import BasicModel
 from stock_reader import MatrixReaderWithIdAndStatus
+from util import bias_binary_crossentropy
 
 
 def embedding_init(shape, name=None):
@@ -82,7 +83,8 @@ class CnnWithSingleDayStatusEncode(BasicModel):
             status_embedding_regularize
 
         self.loss = {
-            'prediction': 'binary_crossentropy',
+            # 'prediction': 'binary_crossentropy',
+            'prediction': bias_binary_crossentropy,
             'auto_encode_loss': 'mean_squared_error',
         }
         self.loss_weights = {
@@ -173,6 +175,7 @@ class CnnWithSingleDayStatusEncode(BasicModel):
         auto_encode_output = Dense(
             stock_num,
             activation="relu",
+            kernel_regularizer=embedding_regularize,
             name="status_auto_encode_output"
         )(single_day_status_latents)
 
@@ -215,3 +218,7 @@ class CnnWithSingleDayStatusEncode(BasicModel):
             outputs=[prediction, auto_encode_loss])
 
         return model
+
+    def predict_prob(self, x):
+        x = self._reshape_input(x)
+        return self.model.predict(x)[0]

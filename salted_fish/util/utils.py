@@ -10,13 +10,17 @@ def save_figure(plt, file_name, path="fig"):
     plt.clf()
 
 
+def format_timestamp():
+    return time.strftime("%Y%m%d %H:%M:%S")
+
+
 def timer(fun):
     def tmp(*args, **kwargs):
         beg_time = time.time()
-        print(f"start at {beg_time}")
+        print(f"start at {format_timestamp()}")
         res = fun(*args, **kwargs)
         end_time = time.time()
-        print(f"end at {end_time}")
+        print(f"end at {format_timestamp()}")
         cost_time = end_time - beg_time
         hour = int(cost_time / 60.0 / 60.0)
         minute = int((cost_time - 60 * 60 * hour) / 60.0)

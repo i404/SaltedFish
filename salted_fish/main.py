@@ -101,8 +101,9 @@ def main():
     sequence_length = 32
     verbose = args.verbose
 
-    def create_model(dropout):
-        l1_lambda = 1e-3
+    def create_model(l1_lambda):
+        # l1_lambda = 1e-3
+        dropout = 0.0
         model = CnnWithSingleDayStatusEncode(
             cnn_filter_nums=[256, 128, 64, 32],
             cnn_dropout=[0.0, 0.0, 0.0, 0.0],
@@ -125,9 +126,9 @@ def main():
         return model
 
     # for reader, model in [models_lst[0], models_lst[1]]:
-    # for l1 in [1e-5, 1e-4, 1e-3, 1e-2, 1e-1]:
-    for d in [0.05, 0.1, 0.15, 0.2]:
-        evaluate_model(create_model(d))
+    # for d in [0.05, 0.1, 0.15, 0.2]:
+    for l1 in [1e-4, 1e-4, 1e-4, 1e-4, 1e-4]:
+        evaluate_model(create_model(l1))
 
 
 if __name__ == "__main__":
